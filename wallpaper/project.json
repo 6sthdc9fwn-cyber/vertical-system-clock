@@ -1,0 +1,716 @@
+{
+  "file": "index.html",
+  "title": "Vertical System Clock",
+  "description": "Orologio, meteo, musica, sensori e informazioni di sistema, con la Via Lattea di sfondo. Pensato per monitor verticali.",
+  "type": "web",
+  "preview": "preview.jpg",
+  "contentrating": "Everyone",
+  "visibility": "public",
+  "tags": [
+    "Technology"
+  ],
+  "general": {
+    "supportsaudioprocessing": true,
+    "localization": {
+      "it-it": {
+        "ui_vsc_language": "<b>Lingua</b>",
+        "ui_vsc_language_auto": "Automatica",
+        "ui_vsc_language_it": "Italiano",
+        "ui_vsc_language_en": "English",
+        "ui_vsc_editmode": "<b>Modalità modifica</b> (sposta e ridimensiona i widget)",
+        "ui_vsc_snapgrid": "&nbsp;&nbsp;Griglia magnetica",
+        "ui_vsc_gridsize": "&nbsp;&nbsp;Passo griglia (px)",
+        "ui_vsc_theme": "<b>Tema</b>",
+        "ui_vsc_theme_dark": "Scuro",
+        "ui_vsc_theme_light": "Chiaro",
+        "ui_vsc_theme_neon": "Neon",
+        "ui_vsc_theme_glass": "Vetro",
+        "ui_vsc_theme_amoled": "AMOLED (nero puro)",
+        "ui_vsc_accentcolor": "Colore principale",
+        "ui_vsc_accentcolor2": "Colore secondario",
+        "ui_vsc_font": "Carattere",
+        "ui_vsc_font_segoe": "Segoe UI (moderno)",
+        "ui_vsc_font_bahn": "Bahnschrift (squadrato)",
+        "ui_vsc_font_cascadia": "Cascadia Code (tecnico)",
+        "ui_vsc_font_consolas": "Consolas (monospazio)",
+        "ui_vsc_font_georgia": "Georgia (elegante)",
+        "ui_vsc_uiscale": "Dimensione interfaccia (%)",
+        "ui_vsc_autofit": "&nbsp;&nbsp;Adatta automaticamente allo schermo",
+        "ui_vsc_cardopacity": "Opacità riquadri (%)",
+        "ui_vsc_showsky": "Via Lattea di sfondo",
+        "ui_vsc_backgroundimage": "Oppure una tua immagine",
+        "ui_vsc_backgrounddim": "&nbsp;&nbsp;Oscura sfondo (%)",
+        "ui_vsc_nightdim": "Attenua di notte",
+        "ui_vsc_nightfrom": "&nbsp;&nbsp;Dalle ore",
+        "ui_vsc_nightto": "&nbsp;&nbsp;Alle ore",
+        "ui_vsc_nightlevel": "&nbsp;&nbsp;Intensità (%)",
+        "ui_vsc_showgreeting": "<b>Saluto</b>",
+        "ui_vsc_showname": "&nbsp;&nbsp;Con il nome",
+        "ui_vsc_customname": "&nbsp;&nbsp;Nome (vuoto = account Windows)",
+        "ui_vsc_showclock": "<b>Orologio</b>",
+        "ui_vsc_clockstyle": "&nbsp;&nbsp;Stile",
+        "ui_vsc_clockstyle_digital": "Digitale",
+        "ui_vsc_clockstyle_analog": "Analogico",
+        "ui_vsc_clockstyle_both": "Entrambi",
+        "ui_vsc_use24h": "&nbsp;&nbsp;Formato 24 ore",
+        "ui_vsc_showseconds": "&nbsp;&nbsp;Mostra secondi",
+        "ui_vsc_analognumbers": "&nbsp;&nbsp;Numeri sul quadrante analogico",
+        "ui_vsc_showdate": "<b>Data</b>",
+        "ui_vsc_showyear": "&nbsp;&nbsp;Con l'anno",
+        "ui_vsc_showweek": "Numero settimana",
+        "ui_vsc_showdayofyear": "Giorno dell'anno",
+        "ui_vsc_showweather": "<b>Meteo</b>",
+        "ui_vsc_weathercity": "&nbsp;&nbsp;Città",
+        "ui_vsc_showforecast": "&nbsp;&nbsp;Previsioni prossimi giorni",
+        "ui_vsc_showsun": "&nbsp;&nbsp;Alba e tramonto",
+        "ui_vsc_showmusic": "<b>Musica</b> (Spotify e altri)",
+        "ui_vsc_musichideidle": "&nbsp;&nbsp;Nascondi quando non suona niente",
+        "ui_vsc_musiccolors": "&nbsp;&nbsp;Colori dalla copertina",
+        "ui_vsc_showcpu": "<b>Prestazioni</b>: CPU",
+        "ui_vsc_showram": "<b>Prestazioni</b>: RAM",
+        "ui_vsc_showgpu": "<b>Prestazioni</b>: GPU",
+        "ui_vsc_showsensors": "<b>Sensori</b> (LibreHardwareMonitor)",
+        "ui_vsc_showtemps": "&nbsp;&nbsp;Temperature",
+        "ui_vsc_showfreq": "&nbsp;&nbsp;Frequenze e consumi",
+        "ui_vsc_showvram": "&nbsp;&nbsp;Memoria video",
+        "ui_vsc_showcores": "&nbsp;&nbsp;Carico per core",
+        "ui_vsc_showfans": "&nbsp;&nbsp;Ventole",
+        "ui_vsc_fansactive": "&nbsp;&nbsp;&nbsp;&nbsp;Solo ventole che girano",
+        "ui_vsc_showdisks": "<b>Dischi</b>",
+        "ui_vsc_showdiskio": "&nbsp;&nbsp;Velocità lettura / scrittura",
+        "ui_vsc_showdisktemp": "&nbsp;&nbsp;Temperatura dischi",
+        "ui_vsc_shownetwork": "<b>Rete</b>",
+        "ui_vsc_showping": "&nbsp;&nbsp;Ping",
+        "ui_vsc_showtop": "<b>Programmi più pesanti</b>",
+        "ui_vsc_toptype": "&nbsp;&nbsp;Mostra",
+        "ui_vsc_toptype_both": "CPU e RAM",
+        "ui_vsc_toptype_cpu": "Solo CPU",
+        "ui_vsc_toptype_ram": "Solo RAM",
+        "ui_vsc_topcount": "&nbsp;&nbsp;Quanti programmi",
+        "ui_vsc_showsysinfo": "<b>Sistema</b>",
+        "ui_vsc_showhost": "&nbsp;&nbsp;Nome computer",
+        "ui_vsc_showos": "&nbsp;&nbsp;Sistema operativo",
+        "ui_vsc_showcpuname": "&nbsp;&nbsp;Processore",
+        "ui_vsc_showgpuname": "&nbsp;&nbsp;Scheda video",
+        "ui_vsc_showres": "&nbsp;&nbsp;Risoluzione",
+        "ui_vsc_showuptime": "&nbsp;&nbsp;Acceso da",
+        "ui_vsc_showaudio": "<b>Barre audio</b>",
+        "ui_vsc_showwarning": "Avviso helper non attivo"
+      },
+      "en-us": {
+        "ui_vsc_language": "<b>Language</b>",
+        "ui_vsc_language_auto": "Automatic",
+        "ui_vsc_language_it": "Italiano",
+        "ui_vsc_language_en": "English",
+        "ui_vsc_editmode": "<b>Edit mode</b> (move and resize widgets)",
+        "ui_vsc_snapgrid": "&nbsp;&nbsp;Snap to grid",
+        "ui_vsc_gridsize": "&nbsp;&nbsp;Grid size (px)",
+        "ui_vsc_theme": "<b>Theme</b>",
+        "ui_vsc_theme_dark": "Dark",
+        "ui_vsc_theme_light": "Light",
+        "ui_vsc_theme_neon": "Neon",
+        "ui_vsc_theme_glass": "Glass",
+        "ui_vsc_theme_amoled": "AMOLED (pure black)",
+        "ui_vsc_accentcolor": "Main color",
+        "ui_vsc_accentcolor2": "Secondary color",
+        "ui_vsc_font": "Font",
+        "ui_vsc_font_segoe": "Segoe UI (modern)",
+        "ui_vsc_font_bahn": "Bahnschrift (squared)",
+        "ui_vsc_font_cascadia": "Cascadia Code (technical)",
+        "ui_vsc_font_consolas": "Consolas (monospace)",
+        "ui_vsc_font_georgia": "Georgia (elegant)",
+        "ui_vsc_uiscale": "Interface size (%)",
+        "ui_vsc_autofit": "&nbsp;&nbsp;Auto-fit to screen",
+        "ui_vsc_cardopacity": "Card opacity (%)",
+        "ui_vsc_showsky": "Milky Way background",
+        "ui_vsc_backgroundimage": "Or your own image",
+        "ui_vsc_backgrounddim": "&nbsp;&nbsp;Darken background (%)",
+        "ui_vsc_nightdim": "Dim at night",
+        "ui_vsc_nightfrom": "&nbsp;&nbsp;From hour",
+        "ui_vsc_nightto": "&nbsp;&nbsp;To hour",
+        "ui_vsc_nightlevel": "&nbsp;&nbsp;Strength (%)",
+        "ui_vsc_showgreeting": "<b>Greeting</b>",
+        "ui_vsc_showname": "&nbsp;&nbsp;With your name",
+        "ui_vsc_customname": "&nbsp;&nbsp;Name (empty = Windows account)",
+        "ui_vsc_showclock": "<b>Clock</b>",
+        "ui_vsc_clockstyle": "&nbsp;&nbsp;Style",
+        "ui_vsc_clockstyle_digital": "Digital",
+        "ui_vsc_clockstyle_analog": "Analog",
+        "ui_vsc_clockstyle_both": "Both",
+        "ui_vsc_use24h": "&nbsp;&nbsp;24-hour format",
+        "ui_vsc_showseconds": "&nbsp;&nbsp;Show seconds",
+        "ui_vsc_analognumbers": "&nbsp;&nbsp;Numbers on analog dial",
+        "ui_vsc_showdate": "<b>Date</b>",
+        "ui_vsc_showyear": "&nbsp;&nbsp;With year",
+        "ui_vsc_showweek": "Week number",
+        "ui_vsc_showdayofyear": "Day of year",
+        "ui_vsc_showweather": "<b>Weather</b>",
+        "ui_vsc_weathercity": "&nbsp;&nbsp;City",
+        "ui_vsc_showforecast": "&nbsp;&nbsp;Forecast",
+        "ui_vsc_showsun": "&nbsp;&nbsp;Sunrise and sunset",
+        "ui_vsc_showmusic": "<b>Music</b> (Spotify and others)",
+        "ui_vsc_musichideidle": "&nbsp;&nbsp;Hide when nothing is playing",
+        "ui_vsc_musiccolors": "&nbsp;&nbsp;Colors from album art",
+        "ui_vsc_showcpu": "<b>Performance</b>: CPU",
+        "ui_vsc_showram": "<b>Performance</b>: RAM",
+        "ui_vsc_showgpu": "<b>Performance</b>: GPU",
+        "ui_vsc_showsensors": "<b>Sensors</b> (LibreHardwareMonitor)",
+        "ui_vsc_showtemps": "&nbsp;&nbsp;Temperatures",
+        "ui_vsc_showfreq": "&nbsp;&nbsp;Clocks and power",
+        "ui_vsc_showvram": "&nbsp;&nbsp;Video memory",
+        "ui_vsc_showcores": "&nbsp;&nbsp;Per-core load",
+        "ui_vsc_showfans": "&nbsp;&nbsp;Fans",
+        "ui_vsc_fansactive": "&nbsp;&nbsp;&nbsp;&nbsp;Only spinning fans",
+        "ui_vsc_showdisks": "<b>Drives</b>",
+        "ui_vsc_showdiskio": "&nbsp;&nbsp;Read / write speed",
+        "ui_vsc_showdisktemp": "&nbsp;&nbsp;Drive temperature",
+        "ui_vsc_shownetwork": "<b>Network</b>",
+        "ui_vsc_showping": "&nbsp;&nbsp;Ping",
+        "ui_vsc_showtop": "<b>Top processes</b>",
+        "ui_vsc_toptype": "&nbsp;&nbsp;Show",
+        "ui_vsc_toptype_both": "CPU and RAM",
+        "ui_vsc_toptype_cpu": "CPU only",
+        "ui_vsc_toptype_ram": "RAM only",
+        "ui_vsc_topcount": "&nbsp;&nbsp;How many",
+        "ui_vsc_showsysinfo": "<b>System</b>",
+        "ui_vsc_showhost": "&nbsp;&nbsp;Computer name",
+        "ui_vsc_showos": "&nbsp;&nbsp;Operating system",
+        "ui_vsc_showcpuname": "&nbsp;&nbsp;Processor",
+        "ui_vsc_showgpuname": "&nbsp;&nbsp;Graphics card",
+        "ui_vsc_showres": "&nbsp;&nbsp;Resolution",
+        "ui_vsc_showuptime": "&nbsp;&nbsp;Uptime",
+        "ui_vsc_showaudio": "<b>Audio bars</b>",
+        "ui_vsc_showwarning": "Helper not running notice"
+      }
+    },
+    "properties": {
+      "language": {
+        "order": 0,
+        "text": "ui_vsc_language",
+        "type": "combo",
+        "value": "auto",
+        "options": [
+          {
+            "label": "ui_vsc_language_auto",
+            "value": "auto"
+          },
+          {
+            "label": "ui_vsc_language_it",
+            "value": "it"
+          },
+          {
+            "label": "ui_vsc_language_en",
+            "value": "en"
+          }
+        ]
+      },
+      "editmode": {
+        "order": 1,
+        "text": "ui_vsc_editmode",
+        "type": "bool",
+        "value": false
+      },
+      "snapgrid": {
+        "order": 2,
+        "text": "ui_vsc_snapgrid",
+        "type": "bool",
+        "value": true
+      },
+      "gridsize": {
+        "order": 3,
+        "text": "ui_vsc_gridsize",
+        "type": "slider",
+        "value": 20,
+        "min": 8,
+        "max": 80,
+        "step": 2,
+        "condition": "snapgrid.value == true"
+      },
+      "theme": {
+        "order": 4,
+        "text": "ui_vsc_theme",
+        "type": "combo",
+        "value": "dark",
+        "options": [
+          {
+            "label": "ui_vsc_theme_dark",
+            "value": "dark"
+          },
+          {
+            "label": "ui_vsc_theme_light",
+            "value": "light"
+          },
+          {
+            "label": "ui_vsc_theme_neon",
+            "value": "neon"
+          },
+          {
+            "label": "ui_vsc_theme_glass",
+            "value": "glass"
+          },
+          {
+            "label": "ui_vsc_theme_amoled",
+            "value": "amoled"
+          }
+        ]
+      },
+      "accentcolor": {
+        "order": 5,
+        "text": "ui_vsc_accentcolor",
+        "type": "color",
+        "value": "0.35 0.82 1"
+      },
+      "accentcolor2": {
+        "order": 6,
+        "text": "ui_vsc_accentcolor2",
+        "type": "color",
+        "value": "0.69 0.49 1"
+      },
+      "font": {
+        "order": 7,
+        "text": "ui_vsc_font",
+        "type": "combo",
+        "value": "segoe",
+        "options": [
+          {
+            "label": "ui_vsc_font_segoe",
+            "value": "segoe"
+          },
+          {
+            "label": "ui_vsc_font_bahn",
+            "value": "bahn"
+          },
+          {
+            "label": "ui_vsc_font_cascadia",
+            "value": "cascadia"
+          },
+          {
+            "label": "ui_vsc_font_consolas",
+            "value": "consolas"
+          },
+          {
+            "label": "ui_vsc_font_georgia",
+            "value": "georgia"
+          }
+        ]
+      },
+      "uiscale": {
+        "order": 8,
+        "text": "ui_vsc_uiscale",
+        "type": "slider",
+        "value": 100,
+        "min": 50,
+        "max": 150,
+        "step": 5
+      },
+      "autofit": {
+        "order": 9,
+        "text": "ui_vsc_autofit",
+        "type": "bool",
+        "value": true
+      },
+      "cardopacity": {
+        "order": 10,
+        "text": "ui_vsc_cardopacity",
+        "type": "slider",
+        "value": 100,
+        "min": 0,
+        "max": 300,
+        "step": 10
+      },
+      "showsky": {
+        "order": 11,
+        "text": "ui_vsc_showsky",
+        "type": "bool",
+        "value": true
+      },
+      "backgroundimage": {
+        "order": 12,
+        "text": "ui_vsc_backgroundimage",
+        "type": "file",
+        "value": ""
+      },
+      "backgrounddim": {
+        "order": 13,
+        "text": "ui_vsc_backgrounddim",
+        "type": "slider",
+        "value": 15,
+        "min": 0,
+        "max": 100,
+        "step": 5
+      },
+      "nightdim": {
+        "order": 14,
+        "text": "ui_vsc_nightdim",
+        "type": "bool",
+        "value": false
+      },
+      "nightfrom": {
+        "order": 15,
+        "text": "ui_vsc_nightfrom",
+        "type": "slider",
+        "value": 23,
+        "min": 0,
+        "max": 23,
+        "step": 1,
+        "condition": "nightdim.value == true"
+      },
+      "nightto": {
+        "order": 16,
+        "text": "ui_vsc_nightto",
+        "type": "slider",
+        "value": 7,
+        "min": 0,
+        "max": 23,
+        "step": 1,
+        "condition": "nightdim.value == true"
+      },
+      "nightlevel": {
+        "order": 17,
+        "text": "ui_vsc_nightlevel",
+        "type": "slider",
+        "value": 50,
+        "min": 10,
+        "max": 90,
+        "step": 5,
+        "condition": "nightdim.value == true"
+      },
+      "showgreeting": {
+        "order": 18,
+        "text": "ui_vsc_showgreeting",
+        "type": "bool",
+        "value": true
+      },
+      "showname": {
+        "order": 19,
+        "text": "ui_vsc_showname",
+        "type": "bool",
+        "value": true,
+        "condition": "showgreeting.value == true"
+      },
+      "customname": {
+        "order": 20,
+        "text": "ui_vsc_customname",
+        "type": "textinput",
+        "value": "",
+        "condition": "showgreeting.value == true && showname.value == true"
+      },
+      "showclock": {
+        "order": 21,
+        "text": "ui_vsc_showclock",
+        "type": "bool",
+        "value": true
+      },
+      "clockstyle": {
+        "order": 22,
+        "text": "ui_vsc_clockstyle",
+        "type": "combo",
+        "value": "digital",
+        "options": [
+          {
+            "label": "ui_vsc_clockstyle_digital",
+            "value": "digital"
+          },
+          {
+            "label": "ui_vsc_clockstyle_analog",
+            "value": "analog"
+          },
+          {
+            "label": "ui_vsc_clockstyle_both",
+            "value": "both"
+          }
+        ],
+        "condition": "showclock.value == true"
+      },
+      "use24h": {
+        "order": 23,
+        "text": "ui_vsc_use24h",
+        "type": "bool",
+        "value": true,
+        "condition": "showclock.value == true"
+      },
+      "showseconds": {
+        "order": 24,
+        "text": "ui_vsc_showseconds",
+        "type": "bool",
+        "value": true,
+        "condition": "showclock.value == true"
+      },
+      "analognumbers": {
+        "order": 25,
+        "text": "ui_vsc_analognumbers",
+        "type": "bool",
+        "value": true,
+        "condition": "showclock.value == true"
+      },
+      "showdate": {
+        "order": 26,
+        "text": "ui_vsc_showdate",
+        "type": "bool",
+        "value": true
+      },
+      "showyear": {
+        "order": 27,
+        "text": "ui_vsc_showyear",
+        "type": "bool",
+        "value": true,
+        "condition": "showdate.value == true"
+      },
+      "showweek": {
+        "order": 28,
+        "text": "ui_vsc_showweek",
+        "type": "bool",
+        "value": true
+      },
+      "showdayofyear": {
+        "order": 29,
+        "text": "ui_vsc_showdayofyear",
+        "type": "bool",
+        "value": true
+      },
+      "showweather": {
+        "order": 30,
+        "text": "ui_vsc_showweather",
+        "type": "bool",
+        "value": true
+      },
+      "weathercity": {
+        "order": 31,
+        "text": "ui_vsc_weathercity",
+        "type": "textinput",
+        "value": "",
+        "condition": "showweather.value == true"
+      },
+      "showforecast": {
+        "order": 32,
+        "text": "ui_vsc_showforecast",
+        "type": "bool",
+        "value": true,
+        "condition": "showweather.value == true"
+      },
+      "showsun": {
+        "order": 33,
+        "text": "ui_vsc_showsun",
+        "type": "bool",
+        "value": true,
+        "condition": "showweather.value == true"
+      },
+      "showmusic": {
+        "order": 34,
+        "text": "ui_vsc_showmusic",
+        "type": "bool",
+        "value": true
+      },
+      "musichideidle": {
+        "order": 35,
+        "text": "ui_vsc_musichideidle",
+        "type": "bool",
+        "value": false,
+        "condition": "showmusic.value == true"
+      },
+      "musiccolors": {
+        "order": 36,
+        "text": "ui_vsc_musiccolors",
+        "type": "bool",
+        "value": false,
+        "condition": "showmusic.value == true"
+      },
+      "showcpu": {
+        "order": 37,
+        "text": "ui_vsc_showcpu",
+        "type": "bool",
+        "value": true
+      },
+      "showram": {
+        "order": 38,
+        "text": "ui_vsc_showram",
+        "type": "bool",
+        "value": true
+      },
+      "showgpu": {
+        "order": 39,
+        "text": "ui_vsc_showgpu",
+        "type": "bool",
+        "value": true
+      },
+      "showsensors": {
+        "order": 40,
+        "text": "ui_vsc_showsensors",
+        "type": "bool",
+        "value": true
+      },
+      "showtemps": {
+        "order": 41,
+        "text": "ui_vsc_showtemps",
+        "type": "bool",
+        "value": true,
+        "condition": "showsensors.value == true"
+      },
+      "showfreq": {
+        "order": 42,
+        "text": "ui_vsc_showfreq",
+        "type": "bool",
+        "value": true,
+        "condition": "showsensors.value == true"
+      },
+      "showvram": {
+        "order": 43,
+        "text": "ui_vsc_showvram",
+        "type": "bool",
+        "value": true,
+        "condition": "showsensors.value == true"
+      },
+      "showcores": {
+        "order": 44,
+        "text": "ui_vsc_showcores",
+        "type": "bool",
+        "value": true,
+        "condition": "showsensors.value == true"
+      },
+      "showfans": {
+        "order": 45,
+        "text": "ui_vsc_showfans",
+        "type": "bool",
+        "value": true,
+        "condition": "showsensors.value == true"
+      },
+      "fansactive": {
+        "order": 46,
+        "text": "ui_vsc_fansactive",
+        "type": "bool",
+        "value": true,
+        "condition": "showsensors.value == true && showfans.value == true"
+      },
+      "showdisks": {
+        "order": 47,
+        "text": "ui_vsc_showdisks",
+        "type": "bool",
+        "value": true
+      },
+      "showdiskio": {
+        "order": 48,
+        "text": "ui_vsc_showdiskio",
+        "type": "bool",
+        "value": true,
+        "condition": "showdisks.value == true"
+      },
+      "showdisktemp": {
+        "order": 49,
+        "text": "ui_vsc_showdisktemp",
+        "type": "bool",
+        "value": true,
+        "condition": "showdisks.value == true"
+      },
+      "shownetwork": {
+        "order": 50,
+        "text": "ui_vsc_shownetwork",
+        "type": "bool",
+        "value": true
+      },
+      "showping": {
+        "order": 51,
+        "text": "ui_vsc_showping",
+        "type": "bool",
+        "value": true,
+        "condition": "shownetwork.value == true"
+      },
+      "showtop": {
+        "order": 52,
+        "text": "ui_vsc_showtop",
+        "type": "bool",
+        "value": true
+      },
+      "toptype": {
+        "order": 53,
+        "text": "ui_vsc_toptype",
+        "type": "combo",
+        "value": "both",
+        "options": [
+          {
+            "label": "ui_vsc_toptype_both",
+            "value": "both"
+          },
+          {
+            "label": "ui_vsc_toptype_cpu",
+            "value": "cpu"
+          },
+          {
+            "label": "ui_vsc_toptype_ram",
+            "value": "ram"
+          }
+        ],
+        "condition": "showtop.value == true"
+      },
+      "topcount": {
+        "order": 54,
+        "text": "ui_vsc_topcount",
+        "type": "slider",
+        "value": 5,
+        "min": 3,
+        "max": 8,
+        "step": 1,
+        "condition": "showtop.value == true"
+      },
+      "showsysinfo": {
+        "order": 55,
+        "text": "ui_vsc_showsysinfo",
+        "type": "bool",
+        "value": true
+      },
+      "showhost": {
+        "order": 56,
+        "text": "ui_vsc_showhost",
+        "type": "bool",
+        "value": true,
+        "condition": "showsysinfo.value == true"
+      },
+      "showos": {
+        "order": 57,
+        "text": "ui_vsc_showos",
+        "type": "bool",
+        "value": true,
+        "condition": "showsysinfo.value == true"
+      },
+      "showcpuname": {
+        "order": 58,
+        "text": "ui_vsc_showcpuname",
+        "type": "bool",
+        "value": true,
+        "condition": "showsysinfo.value == true"
+      },
+      "showgpuname": {
+        "order": 59,
+        "text": "ui_vsc_showgpuname",
+        "type": "bool",
+        "value": true,
+        "condition": "showsysinfo.value == true"
+      },
+      "showres": {
+        "order": 60,
+        "text": "ui_vsc_showres",
+        "type": "bool",
+        "value": true,
+        "condition": "showsysinfo.value == true"
+      },
+      "showuptime": {
+        "order": 61,
+        "text": "ui_vsc_showuptime",
+        "type": "bool",
+        "value": true,
+        "condition": "showsysinfo.value == true"
+      },
+      "showaudio": {
+        "order": 62,
+        "text": "ui_vsc_showaudio",
+        "type": "bool",
+        "value": true
+      },
+      "showwarning": {
+        "order": 63,
+        "text": "ui_vsc_showwarning",
+        "type": "bool",
+        "value": true
+      }
+    }
+  }
+}

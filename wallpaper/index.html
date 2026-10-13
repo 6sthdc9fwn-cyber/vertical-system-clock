@@ -1,0 +1,1211 @@
+<!doctype html>
+<html lang="it" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vertical System Clock</title>
+<style>
+  :root {
+    --accent: #59d1ff;
+    --accent2: #b07cff;
+    --bg: #070a14;
+    --text: #eef3ff;
+    --muted: #8d98ba;
+    --card-rgb: 255, 255, 255;
+    --card-a: .045;
+    --card-op: 1;
+    --line: rgba(255, 255, 255, .09);
+    --track: rgba(255, 255, 255, .07);
+    --blur: 14px;
+    --glow-show: 1;
+    --scale: 1;
+    --dim: .55;
+    --grid: 20px;
+    --warm: #ffb35a;
+    --hot: #ff5a6a;
+    /* unità di base: in verticale segue la larghezza, in orizzontale l'altezza */
+    --fit: 1;
+    --u: calc(min(1vw, .5625vh) * var(--scale) * var(--fit));
+  }
+  /* ---------- Temi ---------- */
+  html[data-theme="light"] {
+    --bg: #e9edf5; --text: #141a2b; --muted: #5b6482;
+    --card-rgb: 255, 255, 255; --card-a: .62;
+    --line: rgba(20, 30, 60, .1); --track: rgba(20, 30, 60, .09);
+  }
+  html[data-theme="neon"] {
+    --bg: #04020b; --card-rgb: 18, 8, 40; --card-a: .55;
+    --line: var(--accent); --track: rgba(255, 255, 255, .08);
+  }
+  html[data-theme="neon"] .card { box-shadow: 0 0 calc(var(--u) * 2) var(--glow1, rgba(89, 209, 255, .3)), inset 0 0 calc(var(--u) * 2) rgba(255, 255, 255, .03); }
+  html[data-theme="neon"] .time { filter: drop-shadow(0 0 calc(var(--u) * 1.2) var(--accent)); }
+  html[data-theme="glass"] {
+    --card-a: .1; --blur: 30px; --line: rgba(255, 255, 255, .2);
+  }
+  html[data-theme="glass"] .card { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15); }
+  html[data-theme="amoled"] {
+    --bg: #000; --card-a: 0; --line: rgba(255, 255, 255, .12); --glow-show: 0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+  #bg, #glow, #dim, #grid, #night { position: fixed; inset: 0; pointer-events: none; }
+  #bg { background-size: cover; background-position: center; }
+  #dim { background: #000; opacity: 0; transition: opacity .4s; }
+  #glow {
+    opacity: var(--glow-show);
+    background:
+      radial-gradient(60% 40% at 15% 10%, var(--glow1, rgba(89, 209, 255, .22)), transparent 70%),
+      radial-gradient(60% 40% at 90% 85%, var(--glow2, rgba(176, 124, 255, .2)), transparent 70%);
+    animation: drift 30s ease-in-out infinite alternate;
+  }
+  @keyframes drift { to { transform: translate(2%, -2%) scale(1.06); } }
+  #grid {
+    display: none;
+    background-image:
+      linear-gradient(to right, rgba(127, 127, 127, .14) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(127, 127, 127, .14) 1px, transparent 1px);
+    background-size: var(--grid) var(--grid);
+  }
+  body.editing.snapping #grid { display: block; }
+  #night { background: #000; opacity: 0; transition: opacity 2s; z-index: 15; }
+
+  main {
+    position: relative;
+    /* la larghezza non segue l'adattamento automatico: i riquadri usano sempre tutto lo schermo */
+    width: calc(min(1vw, .5625vh) * var(--scale) * 92);
+    max-width: calc(100vw - 32px);
+    height: 100%;
+    margin: 0 auto;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: calc(var(--u) * 2.6);
+  }
+
+  /* ---------- Orologio ---------- */
+  .clock { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .greet { font-size: calc(var(--u) * 2.8); color: var(--muted); letter-spacing: .04em; }
+  .clockrow { display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 5); margin-top: calc(var(--u) * 1); }
+  .time {
+    font-size: calc(var(--u) * 19); font-weight: 200; line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+    background: linear-gradient(120deg, var(--text) 30%, var(--accent));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .clockrow.both .time { font-size: calc(var(--u) * 14); }
+  .time small { font-size: .3em; margin-left: .15em; }
+  #w-analog { width: calc(var(--u) * 30); aspect-ratio: 1; }
+  .clockrow.both #w-analog { width: calc(var(--u) * 22); }
+  #w-analog svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .a-face { fill: rgba(var(--card-rgb), calc(var(--card-a) * var(--card-op))); stroke: var(--line); stroke-width: 2; }
+  .a-tick { stroke: var(--muted); stroke-width: 1.5; opacity: .6; }
+  .a-tick5 { stroke: var(--text); stroke-width: 3.5; stroke-linecap: round; }
+  .a-num { fill: var(--muted); font-size: 15px; text-anchor: middle; dominant-baseline: central; }
+  .a-hour { stroke: var(--text); stroke-width: 7; stroke-linecap: round; }
+  .a-min { stroke: var(--text); stroke-width: 4.5; stroke-linecap: round; }
+  .a-sec { stroke: var(--accent); stroke-width: 2; stroke-linecap: round; }
+  .a-dot { fill: var(--accent); }
+  .date { font-size: calc(var(--u) * 3.4); font-weight: 300; margin-top: calc(var(--u) * 1.6); }
+  .date-sub { font-size: calc(var(--u) * 2.1); color: var(--muted); margin-top: calc(var(--u) * .6); }
+
+  /* ---------- Card ---------- */
+  .card {
+    background: rgba(var(--card-rgb), calc(var(--card-a) * var(--card-op)));
+    border: 1px solid var(--line);
+    border-radius: calc(var(--u) * 2.6);
+    padding: calc(var(--u) * 2.8) calc(var(--u) * 3);
+    backdrop-filter: blur(var(--blur));
+    min-width: 0;
+  }
+  .card h2 {
+    font-size: calc(var(--u) * 1.7); font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .14em; margin-bottom: calc(var(--u) * 2);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: calc(var(--u) * 2.6); }
+  .off, .idle { display: none !important; }
+  .row { display: contents; }
+  .muted { color: var(--muted); }
+  .meter { height: calc(var(--u) * .9); border-radius: 99px; background: var(--track); overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .8s; }
+  .meter i.warn { background: linear-gradient(90deg, var(--warm), var(--hot)); }
+
+  /* Prestazioni */
+  .gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: calc(var(--u) * 2); text-align: center; }
+  .gauges > div { width: 100%; max-width: calc(var(--u) * 21); justify-self: center; }
+  .gauge { position: relative; width: 100%; aspect-ratio: 1; }
+  .gauge svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .gauge .track { stroke: var(--track); }
+  .gauge .bar { stroke: url(#grad); stroke-linecap: round; transition: stroke-dashoffset .8s cubic-bezier(.3, .7, .3, 1); }
+  .gauge .val { position: absolute; inset: 0; display: grid; place-content: center; font-size: calc(var(--u) * 4.2); font-weight: 300; font-variant-numeric: tabular-nums; }
+  .gauge .val span { font-size: .45em; color: var(--muted); }
+  .glabel { font-size: calc(var(--u) * 2); font-weight: 600; margin-top: calc(var(--u) * .8); }
+  .gsub { font-size: calc(var(--u) * 1.6); color: var(--muted); margin-top: calc(var(--u) * .3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Meteo */
+  .wx-now { display: flex; align-items: center; gap: calc(var(--u) * 2); }
+  .wx-icon { font-size: calc(var(--u) * 7); line-height: 1; font-family: "Segoe UI Emoji", sans-serif; }
+  .wx-temp { font-size: calc(var(--u) * 5.6); font-weight: 300; line-height: 1; }
+  .wx-desc { font-size: calc(var(--u) * 1.9); color: var(--muted); margin-top: calc(var(--u) * .5); }
+  .wx-meta { display: grid; grid-template-columns: 1fr 1fr; gap: calc(var(--u) * .6) calc(var(--u) * 2); font-size: calc(var(--u) * 1.7); margin-top: calc(var(--u) * 1.8); }
+  .wx-meta span { color: var(--muted); }
+  .wx-sun { font-size: calc(var(--u) * 1.7); color: var(--muted); margin-top: calc(var(--u) * 1.2); }
+  .wx-days { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(var(--u) * .6); margin-top: calc(var(--u) * 1.8); text-align: center; font-size: calc(var(--u) * 1.6); }
+  .wx-days b { display: block; font-weight: 600; }
+  .wx-days i { display: block; font-style: normal; font-size: 1.7em; line-height: 1.4; font-family: "Segoe UI Emoji", sans-serif; }
+  .wx-days small { color: var(--muted); font-size: 1em; }
+  .wx-msg { font-size: calc(var(--u) * 1.8); color: var(--muted); }
+
+  /* Musica */
+  .mu { display: flex; gap: calc(var(--u) * 2); align-items: center; }
+  .mu-cover {
+    flex: none; width: calc(var(--u) * 13); aspect-ratio: 1; border-radius: calc(var(--u) * 1.4);
+    background: var(--track) center / cover no-repeat;
+    display: grid; place-content: center; font-size: calc(var(--u) * 5); color: var(--muted);
+    box-shadow: 0 calc(var(--u) * 1) calc(var(--u) * 3) rgba(0, 0, 0, .35);
+  }
+  .mu-cover.has-art { font-size: 0; }
+  .mu-info { min-width: 0; }
+  .mu-title { font-size: calc(var(--u) * 2.4); font-weight: 600; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .mu-artist { font-size: calc(var(--u) * 1.9); color: var(--accent); margin-top: calc(var(--u) * .5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mu-album { font-size: calc(var(--u) * 1.6); color: var(--muted); margin-top: calc(var(--u) * .3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mu-bar { margin-top: calc(var(--u) * 2); }
+  .mu-bar i { transition: none; }
+  .mu-time { display: flex; justify-content: space-between; font-size: calc(var(--u) * 1.5); color: var(--muted); margin-top: calc(var(--u) * .7); font-variant-numeric: tabular-nums; }
+
+  /* Sensori */
+  .hw-msg { display: none; font-size: calc(var(--u) * 1.8); color: var(--muted); }
+  #c-sensors.nohw .hw-msg { display: block; }
+  #c-sensors.nohw .hw-part { display: none; }
+  .hw-part + .hw-part { margin-top: calc(var(--u) * 2.2); }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: calc(var(--u) * 1.4); }
+  .tile { background: var(--track); border-radius: calc(var(--u) * 1.4); padding: calc(var(--u) * 1.3) calc(var(--u) * 1.5); min-width: 0; }
+  .tile b { display: block; font-size: calc(var(--u) * 3.6); font-weight: 300; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tile b small { font-size: .5em; color: var(--muted); margin-left: .1em; }
+  .tile span { display: block; font-size: calc(var(--u) * 1.5); color: var(--muted); margin-top: calc(var(--u) * .3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .meter { margin-top: calc(var(--u) * .9); height: calc(var(--u) * .6); }
+  .tiles.small b { font-size: calc(var(--u) * 2.6); }
+  .vram-top { display: flex; justify-content: space-between; font-size: calc(var(--u) * 1.8); margin-bottom: calc(var(--u) * .8); }
+  .vram-top span { color: var(--muted); }
+  .cores { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: calc(var(--u) * .8); text-align: center; }
+  .core-bar { height: calc(var(--u) * 7); border-radius: calc(var(--u) * .8); background: var(--track); position: relative; overflow: hidden; }
+  .core-bar i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(0deg, var(--accent), var(--accent2)); transition: height .8s; }
+  .core-lbl { font-size: calc(var(--u) * 1.4); margin-top: calc(var(--u) * .5); }
+  .core-lbl span { display: block; color: var(--muted); font-size: .9em; }
+  .fans { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1); }
+  .fan { display: flex; align-items: center; gap: calc(var(--u) * .8); font-size: calc(var(--u) * 1.7); background: var(--track); border-radius: 99px; padding: calc(var(--u) * .6) calc(var(--u) * 1.4); }
+  .fan svg { width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); fill: var(--accent); }
+  .fan.spin svg { animation: spin var(--spd, 2s) linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fan span { color: var(--muted); }
+
+  /* Dischi */
+  .disk + .disk { margin-top: calc(var(--u) * 1.8); }
+  .disk-top { display: flex; justify-content: space-between; gap: calc(var(--u) * 1); font-size: calc(var(--u) * 1.8); margin-bottom: calc(var(--u) * .8); }
+  .disk-top b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .disk-top span { color: var(--muted); white-space: nowrap; }
+  .disk-io { display: flex; justify-content: space-between; font-size: calc(var(--u) * 1.5); color: var(--muted); margin-top: calc(var(--u) * .6); font-variant-numeric: tabular-nums; }
+  .disk-io .r { color: var(--accent); }
+  .disk-io .w { color: var(--accent2); }
+
+  /* Rete */
+  .net-row { display: flex; justify-content: space-between; font-size: calc(var(--u) * 2.2); font-variant-numeric: tabular-nums; }
+  .net-row div span { display: block; font-size: .7em; color: var(--muted); }
+  .dn { color: var(--accent); }
+  .upc { color: var(--accent2); }
+  .ping { display: flex; align-items: baseline; justify-content: space-between; font-size: calc(var(--u) * 1.8); margin-top: calc(var(--u) * 1.4); }
+  .ping b { font-size: 1.3em; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ping span { color: var(--muted); font-size: .85em; }
+  #spark { width: 100%; height: calc(var(--u) * 7); margin-top: calc(var(--u) * 1.4); display: block; }
+
+  /* Programmi */
+  .top-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: calc(var(--u) * 2.4); }
+  .top-cols h3 { font-size: calc(var(--u) * 1.6); color: var(--accent); font-weight: 600; margin-bottom: calc(var(--u) * 1); }
+  .top-cols ol { list-style: none; }
+  .top-cols li { font-size: calc(var(--u) * 1.6); }
+  .top-cols li + li { margin-top: calc(var(--u) * 1); }
+  .top-line { display: flex; justify-content: space-between; gap: calc(var(--u) * 1); }
+  .top-line b { font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-line span { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .top-cols .meter { height: calc(var(--u) * .45); margin-top: calc(var(--u) * .4); }
+
+  /* Sistema */
+  .info { display: grid; grid-template-columns: auto 1fr; gap: calc(var(--u) * 1) calc(var(--u) * 2.4); font-size: calc(var(--u) * 1.7); }
+  .info dt { color: var(--muted); }
+  .info dd { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  #offline {
+    display: none; text-align: center; font-size: calc(var(--u) * 1.8); color: #ffcf8a;
+    background: rgba(255, 170, 60, .08); border: 1px solid rgba(255, 170, 60, .25);
+    border-radius: 99px; padding: calc(var(--u) * 1.1) calc(var(--u) * 3);
+  }
+  body.offline #offline { display: block; }
+  body.offline .live { opacity: .35; }
+
+  #audio { position: fixed; left: 0; right: 0; bottom: 0; width: 100%; height: 12vh; pointer-events: none; }
+
+  /* ---------- Widget spostabili ---------- */
+  .fit { width: fit-content; margin-left: auto; margin-right: auto; }
+  [data-drag] { position: relative; transform-origin: center; }
+  /* widget con posizione assoluta (disposizione fissata in Modalità modifica) */
+  [data-drag].pinned { position: fixed; margin: 0; z-index: 2; transform-origin: top left; }
+  .clockrow:has(> .pinned) { min-height: 0; }
+  body.editing [data-drag] { outline: 2px dashed var(--accent); outline-offset: calc(var(--u) * .7); cursor: move; }
+  body.editing [data-drag].selected { outline: 2px solid var(--accent2); z-index: 10; }
+  body.editing [data-drag]::before {
+    content: attr(data-label); position: absolute; left: 0; top: calc(var(--u) * -3);
+    font: 600 12px "Segoe UI", sans-serif; letter-spacing: .04em; white-space: nowrap;
+    color: var(--accent); -webkit-text-fill-color: var(--accent);
+  }
+  #editbar {
+    display: none; position: fixed; z-index: 20; left: 50%; bottom: 24px; transform: translateX(-50%);
+    width: max-content; max-width: calc(100vw - 32px); flex-wrap: wrap; justify-content: center;
+    align-items: center; gap: 10px 14px; padding: 12px 16px; border-radius: 18px;
+    background: rgba(10, 14, 26, .94); border: 1px solid var(--accent);
+    font: 13px "Segoe UI", sans-serif; color: #eef3ff;
+  }
+  body.editing #editbar { display: flex; }
+  #editbar .sep { width: 1px; align-self: stretch; background: rgba(255, 255, 255, .15); }
+  #editbar b { color: var(--accent); }
+  #editbar button {
+    font: inherit; color: #eef3ff; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 99px; padding: 5px 12px; cursor: pointer; min-width: 32px;
+  }
+  #editbar button.primary { color: #000; background: var(--accent); border-color: transparent; }
+  #sz-val { min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="dim"></div><div id="glow"></div><div id="grid"></div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs><linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#59d1ff" id="g1"/><stop offset="1" stop-color="#b07cff" id="g2"/>
+  </linearGradient></defs>
+</svg>
+
+<main>
+  <section class="clock">
+    <div class="greet fit" id="greet" data-drag="greet" data-i18n-label="w_greet"></div>
+    <div class="clockrow" id="clockrow">
+      <div id="w-analog" data-drag="analog" data-i18n-label="w_analog"></div>
+      <div class="time" id="timebox" data-drag="clock" data-i18n-label="w_clock"><span id="hh">00</span>:<span id="mm">00</span><small id="ss"></small></div>
+    </div>
+    <div class="date fit" id="date" data-drag="date" data-i18n-label="w_date"></div>
+    <div class="date-sub fit" id="datesub" data-drag="datesub" data-i18n-label="w_datesub"></div>
+  </section>
+
+  <div id="offline" class="fit" data-drag="offline" data-i18n-label="w_offline" data-i18n="offline"></div>
+
+  <div class="two" id="row-a">
+    <section class="card" id="c-weather" data-drag="weather" data-i18n-label="weather">
+      <h2 id="wx-title" data-i18n="weather"></h2>
+      <div class="wx-msg" id="wx-msg" data-i18n="loading"></div>
+      <div id="wx-body" class="off">
+        <div class="wx-now">
+          <div class="wx-icon" id="wx-icon"></div>
+          <div><div class="wx-temp" id="wx-temp">–</div><div class="wx-desc" id="wx-desc"></div></div>
+        </div>
+        <div class="wx-meta" id="wx-meta"></div>
+        <div class="wx-sun" id="wx-sun"></div>
+        <div class="wx-days" id="wx-days"></div>
+      </div>
+    </section>
+
+    <section class="card" id="c-music" data-drag="music" data-i18n-label="w_music">
+      <h2 id="mu-head" data-i18n="now_playing"></h2>
+      <div class="mu">
+        <div class="mu-cover" id="mu-cover">♪</div>
+        <div class="mu-info">
+          <div class="mu-title" id="mu-title"></div>
+          <div class="mu-artist" id="mu-artist"></div>
+          <div class="mu-album" id="mu-album"></div>
+        </div>
+      </div>
+      <div class="meter mu-bar"><i id="mu-prog" style="width:0"></i></div>
+      <div class="mu-time"><span id="mu-pos">0:00</span><span id="mu-state"></span><span id="mu-dur">0:00</span></div>
+    </section>
+  </div>
+
+  <section class="card live" id="c-perf" data-drag="perf" data-i18n-label="performance">
+    <h2 data-i18n="performance"></h2>
+    <div class="gauges">
+      <div id="w-cpu"><div class="gauge" id="g-cpu"></div><div class="glabel">CPU</div><div class="gsub" id="cpu-sub">–</div></div>
+      <div id="w-ram"><div class="gauge" id="g-ram"></div><div class="glabel">RAM</div><div class="gsub" id="ram-sub">–</div></div>
+      <div id="w-gpu"><div class="gauge" id="g-gpu"></div><div class="glabel">GPU</div><div class="gsub" id="gpu-sub">–</div></div>
+    </div>
+  </section>
+
+  <section class="card live nohw" id="c-sensors" data-drag="sensors" data-i18n-label="sensors">
+    <h2 data-i18n="sensors"></h2>
+    <div class="hw-msg" data-i18n="hw_missing"></div>
+    <div class="hw-part tiles" id="s-temps"></div>
+    <div class="hw-part tiles small" id="s-freq"></div>
+    <div class="hw-part" id="s-vram">
+      <div class="vram-top"><b data-i18n="vram"></b><span id="vram-txt">–</span></div>
+      <div class="meter"><i id="vram-bar" style="width:0"></i></div>
+    </div>
+    <div class="hw-part cores" id="s-cores"></div>
+    <div class="hw-part fans" id="s-fans"></div>
+  </section>
+
+  <div class="two" id="row-b">
+    <section class="card live" id="c-disks" data-drag="disks" data-i18n-label="disks"><h2 data-i18n="disks"></h2><div id="disks"></div></section>
+    <section class="card live" id="c-net" data-drag="net" data-i18n-label="network">
+      <h2 data-i18n="network"></h2>
+      <div class="net-row">
+        <div class="dn"><span>↓ Download</span><b id="down">–</b></div>
+        <div class="upc" style="text-align:right"><span>↑ Upload</span><b id="up">–</b></div>
+      </div>
+      <div class="ping" id="ping-row"><div>Ping <span id="ping-host"></span></div><b id="ping">–</b></div>
+      <canvas id="spark"></canvas>
+    </section>
+  </div>
+
+  <div class="two" id="row-c">
+    <section class="card live" id="c-top" data-drag="top" data-i18n-label="w_top">
+      <h2 data-i18n="top"></h2>
+      <div class="top-cols">
+        <div id="top-cpu-col"><h3>CPU</h3><ol id="top-cpu"></ol></div>
+        <div id="top-ram-col"><h3>RAM</h3><ol id="top-ram"></ol></div>
+      </div>
+    </section>
+    <section class="card" id="c-sys" data-drag="sys" data-i18n-label="system">
+      <h2 data-i18n="system"></h2>
+      <dl class="info">
+        <div class="row" id="r-host"><dt data-i18n="computer"></dt><dd id="i-host">–</dd></div>
+        <div class="row" id="r-os"><dt data-i18n="os"></dt><dd id="i-os">–</dd></div>
+        <div class="row" id="r-cpu"><dt data-i18n="cpu_name"></dt><dd id="i-cpu">–</dd></div>
+        <div class="row" id="r-gpu"><dt data-i18n="gpu_name"></dt><dd id="i-gpu">–</dd></div>
+        <div class="row" id="r-res"><dt data-i18n="resolution"></dt><dd id="i-res">–</dd></div>
+        <div class="row" id="r-up"><dt data-i18n="uptime"></dt><dd id="i-up">–</dd></div>
+      </dl>
+    </section>
+  </div>
+</main>
+
+<canvas id="audio"></canvas>
+<div id="night"></div>
+
+<div id="editbar">
+  <span data-i18n="edit_help"></span>
+  <span class="sep"></span>
+  <span><span data-i18n="selected"></span> <b id="selname"></b></span>
+  <button id="sz-minus">−</button><span id="sz-val">–</span><button id="sz-plus">+</button>
+  <button id="sel-reset" data-i18n="reset_one"></button>
+  <button id="resetall" class="primary" data-i18n="reset_all"></button>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+// ?demo: dati finti al posto di helper, meteo e musica (per l'anteprima del Workshop)
+const DEMO = /[?&]demo\b/.test(location.search);
+
+/* ---------- Lingue / Languages ---------- */
+const I18N = {
+  it: {
+    locale: 'it-IT',
+    night: 'Buonanotte', morning: 'Buongiorno', afternoon: 'Buon pomeriggio', evening: 'Buonasera',
+    week: 'Settimana', day: 'Giorno', days_short: 'g',
+    w_greet: 'Saluto', w_analog: 'Orologio analogico', w_clock: 'Orologio', w_date: 'Data',
+    w_datesub: 'Settimana / giorno', w_offline: 'Avviso', w_music: 'Musica', w_top: 'Programmi',
+    offline: 'Dati di sistema non disponibili: installa l\'<b>helper</b> (link nella descrizione dello sfondo)',
+    weather: 'Meteo', loading: 'Caricamento…', now_playing: 'In riproduzione', performance: 'Prestazioni',
+    sensors: 'Sensori', hw_missing: 'Avvia <b>LibreHardwareMonitor</b> per vedere temperature, ventole e frequenze.',
+    vram: 'Memoria video', disks: 'Dischi', network: 'Rete', top: 'Programmi più pesanti', system: 'Sistema',
+    computer: 'Computer', os: 'Sistema', cpu_name: 'Processore', gpu_name: 'Scheda video',
+    resolution: 'Risoluzione', uptime: 'Acceso da',
+    edit_help: 'Trascina i widget · rotellina o <b>− +</b> per la dimensione · doppio clic per rimettere a posto',
+    selected: 'Selezionato:', none: 'nessuno', reset_one: 'Rimetti a posto', reset_all: 'Ripristina tutto',
+    threads: 'thread', free: 'liberi', read: 'L', write: 'S', unreachable: 'non raggiungibile',
+    no_track: 'Nessun brano in riproduzione', playing: '▶ In riproduzione', paused: '❚❚ In pausa',
+    only_we: 'Disponibile solo dentro Wallpaper Engine',
+    hotspot: 'GPU hot spot', gpu_mem: 'Memoria GPU', cpu_power: 'Consumo CPU', gpu_power: 'Consumo GPU',
+    fan: 'Ventola', stopped: 'ferma',
+    wx_city: 'Scrivi la tua città nel pannello di Wallpaper Engine (Meteo → Città).',
+    wx_notfound: 'Città "{0}" non trovata.', wx_error: 'Meteo non disponibile: controllo la connessione e riprovo tra poco.',
+    feels: 'Percepita', humidity: 'Umidità', minmax: 'Min / Max', wind: 'Vento', sunrise: 'Alba', sunset: 'Tramonto'
+  },
+  en: {
+    locale: 'en-GB',
+    night: 'Good night', morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening',
+    week: 'Week', day: 'Day', days_short: 'd',
+    w_greet: 'Greeting', w_analog: 'Analog clock', w_clock: 'Clock', w_date: 'Date',
+    w_datesub: 'Week / day', w_offline: 'Notice', w_music: 'Music', w_top: 'Processes',
+    offline: 'System data unavailable: install the <b>helper</b> (link in the wallpaper description)',
+    weather: 'Weather', loading: 'Loading…', now_playing: 'Now playing', performance: 'Performance',
+    sensors: 'Sensors', hw_missing: 'Start <b>LibreHardwareMonitor</b> to see temperatures, fans and clocks.',
+    vram: 'Video memory', disks: 'Drives', network: 'Network', top: 'Top processes', system: 'System',
+    computer: 'Computer', os: 'System', cpu_name: 'Processor', gpu_name: 'Graphics card',
+    resolution: 'Resolution', uptime: 'Uptime',
+    edit_help: 'Drag the widgets · mouse wheel or <b>− +</b> to resize · double-click to reset',
+    selected: 'Selected:', none: 'none', reset_one: 'Reset position', reset_all: 'Reset all',
+    threads: 'threads', free: 'free', read: 'R', write: 'W', unreachable: 'unreachable',
+    no_track: 'Nothing playing', playing: '▶ Playing', paused: '❚❚ Paused',
+    only_we: 'Only available inside Wallpaper Engine',
+    hotspot: 'GPU hot spot', gpu_mem: 'GPU memory', cpu_power: 'CPU power', gpu_power: 'GPU power',
+    fan: 'Fan', stopped: 'stopped',
+    wx_city: 'Type your city in the Wallpaper Engine panel (Weather → City).',
+    wx_notfound: 'City "{0}" not found.', wx_error: 'Weather unavailable: checking the connection, retrying soon.',
+    feels: 'Feels like', humidity: 'Humidity', minmax: 'Min / Max', wind: 'Wind', sunrise: 'Sunrise', sunset: 'Sunset'
+  }
+};
+let LANG = /^it/i.test(navigator.language || '') ? 'it' : 'en';
+const t = (k, ...args) => String(I18N[LANG][k] ?? I18N.en[k] ?? k).replace(/\{(\d)\}/g, (_, i) => args[i]);
+function applyI18n() {
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-label]').forEach(el => { el.dataset.label = t(el.dataset.i18nLabel); });
+}
+const S = {
+  h24: true, secs: true, audio: true, sys: true, year: true, week: true, doy: true,
+  edit: false, snap: true, grid: 20, autoFit: true,
+  showName: true, customName: '', winName: '',
+  clock: true, clockStyle: 'digital', analogNumbers: true,
+  sensors: true, fansActive: true, diskIO: true, diskTemp: true,
+  topType: 'both', topCount: 5,
+  weatherCity: '', musicHideIdle: false, musicColors: false, bgImage: '', sky: true,
+  night: false, nightFrom: 23, nightTo: 7, nightLevel: 50,
+  accent: '0.35 0.82 1', accent2: '0.69 0.49 1'
+};
+const pad = n => String(n).padStart(2, '0');
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const root = document.documentElement.style;
+
+/* ---------- Formattazione ---------- */
+function bytes(b, dec = 1) {
+  const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0;
+  while (b >= 1024 && i < u.length - 1) { b /= 1024; i++; }
+  return `${b.toFixed(i < 2 ? 0 : dec)} ${u[i]}`;
+}
+const rate = b => bytes(b) + '/s';
+function uptime(s) {
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return (d ? `${d}${t('days_short')} ` : '') + `${h}h ${pad(m)}m`;
+}
+const mmss = s => { s = Math.max(0, Math.floor(s || 0)); return `${Math.floor(s / 60)}:${pad(s % 60)}`; };
+const tempColor = t => t >= 80 ? 'var(--hot)' : t >= 65 ? 'var(--warm)' : 'var(--text)';
+const num = (v, d = 0) => v == null || isNaN(v) ? '–' : Number(v).toFixed(d);
+
+/* ---------- Orologio ---------- */
+function weekNumber(d) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  return Math.ceil(((t - Date.UTC(t.getUTCFullYear(), 0, 1)) / 864e5 + 1) / 7);
+}
+function tickGreeting() {
+  const hr = new Date().getHours();
+  const greeting = t(hr < 5 ? 'night' : hr < 13 ? 'morning' : hr < 18 ? 'afternoon' : 'evening');
+  const name = S.showName ? (S.customName || S.winName) : '';
+  $('greet').textContent = name ? `${greeting}, ${name}` : greeting;
+}
+function tickDate(d) {
+  $('date').textContent = cap(d.toLocaleDateString(t('locale'), { weekday: 'long', day: 'numeric', month: 'long' }))
+    + (S.year ? ' ' + d.getFullYear() : '');
+  const doy = Math.floor((d - new Date(d.getFullYear(), 0, 1)) / 864e5) + 1;
+  const sub = [];
+  if (S.week) sub.push(`${t('week')} ${weekNumber(d)}`);
+  if (S.doy) sub.push(`${t('day')} ${doy}`);
+  $('datesub').textContent = sub.join(' · ');
+  $('datesub').classList.toggle('off', !sub.length);
+}
+function tick() {
+  const d = new Date();
+  let h = d.getHours(), suffix = '';
+  if (!S.h24) { suffix = h < 12 ? ' AM' : ' PM'; h = h % 12 || 12; }
+  $('hh').textContent = S.h24 ? pad(h) : h;
+  $('mm').textContent = pad(d.getMinutes());
+  $('ss').textContent = (S.secs ? pad(d.getSeconds()) : '') + suffix;
+  tickGreeting();
+  tickDate(d);
+  updateNight();
+  setTimeout(tick, 1000 - d.getMilliseconds() + 5);
+}
+
+/* ---------- Orologio analogico ---------- */
+function buildAnalog() {
+  let s = '<svg viewBox="0 0 200 200"><circle class="a-face" cx="100" cy="100" r="97"/>';
+  for (let i = 0; i < 60; i++) {
+    const a = i * Math.PI / 30, long = i % 5 === 0, r1 = long ? 80 : 87, r2 = 92;
+    s += `<line class="${long ? 'a-tick5' : 'a-tick'}" x1="${100 + r1 * Math.sin(a)}" y1="${100 - r1 * Math.cos(a)}" x2="${100 + r2 * Math.sin(a)}" y2="${100 - r2 * Math.cos(a)}"/>`;
+  }
+  if (S.analogNumbers) {
+    for (let h = 1; h <= 12; h++) {
+      const a = h * Math.PI / 6;
+      s += `<text class="a-num" x="${100 + 67 * Math.sin(a)}" y="${100 - 67 * Math.cos(a)}">${h}</text>`;
+    }
+  }
+  s += '<line id="a-h" class="a-hour" x1="100" y1="100" x2="100" y2="50"/>'
+     + '<line id="a-m" class="a-min" x1="100" y1="100" x2="100" y2="26"/>'
+     + '<line id="a-s" class="a-sec" x1="100" y1="118" x2="100" y2="16"/>'
+     + '<circle class="a-dot" cx="100" cy="100" r="5"/></svg>';
+  $('w-analog').innerHTML = s;
+}
+function updateAnalog() {
+  if ($('w-analog').classList.contains('off')) return;
+  const d = new Date();
+  const sec = d.getSeconds() + d.getMilliseconds() / 1000;
+  const min = d.getMinutes() + sec / 60;
+  const hr = d.getHours() % 12 + min / 60;
+  $('a-h').setAttribute('transform', `rotate(${hr * 30} 100 100)`);
+  $('a-m').setAttribute('transform', `rotate(${min * 6} 100 100)`);
+  $('a-s').setAttribute('transform', `rotate(${sec * 6} 100 100)`);
+  $('a-s').style.display = S.secs ? '' : 'none';
+}
+
+/* ---------- Attenuazione notturna ---------- */
+function updateNight() {
+  const h = new Date().getHours();
+  const inRange = S.nightFrom <= S.nightTo ? (h >= S.nightFrom && h < S.nightTo) : (h >= S.nightFrom || h < S.nightTo);
+  $('night').style.opacity = S.night && inRange ? S.nightLevel / 100 : 0;
+}
+
+/* ---------- Indicatori circolari ---------- */
+const R = 52, C = 2 * Math.PI * R;
+const gauges = {};
+for (const k of ['cpu', 'ram', 'gpu']) {
+  const el = $('g-' + k);
+  el.innerHTML = `<svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="${R}" fill="none" stroke-width="9"/>
+    <circle class="bar" cx="60" cy="60" r="${R}" fill="none" stroke-width="9" stroke-dasharray="${C}" stroke-dashoffset="${C}"/></svg>
+    <div class="val">–</div>`;
+  gauges[k] = { bar: el.querySelector('.bar'), val: el.querySelector('.val') };
+}
+function setGauge(k, pct) {
+  const g = gauges[k];
+  if (pct == null || isNaN(pct)) { g.bar.style.strokeDashoffset = C; g.val.textContent = '–'; return; }
+  pct = Math.max(0, Math.min(100, pct));
+  g.bar.style.strokeDashoffset = C * (1 - pct / 100);
+  g.val.innerHTML = `<b style="font-weight:inherit">${Math.round(pct)}<span>%</span></b>`;
+}
+
+/* ---------- Grafico rete ---------- */
+const hist = { down: Array(60).fill(0), up: Array(60).fill(0) };
+function drawSpark() {
+  const cv = $('spark'), dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  cv.width = w * dpr; cv.height = h * dpr;
+  const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  const max = Math.max(1024, ...hist.down, ...hist.up);
+  const line = (arr, color) => {
+    ctx.beginPath();
+    arr.forEach((v, i) => {
+      const x = i / (arr.length - 1) * w, y = h - (v / max) * (h - 4) - 2;
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
+    ctx.globalAlpha = .12; ctx.fillStyle = color; ctx.fill(); ctx.globalAlpha = 1;
+  };
+  line(hist.up, css('--accent2'));
+  line(hist.down, css('--accent'));
+}
+
+/* ---------- Dati di sistema (da stats.js) ---------- */
+let last = null;
+function setOnline(on) { document.body.classList.toggle('offline', !on); }
+
+function apply(d) {
+  if (!d || Date.now() - d.ts > 12000) { setOnline(false); return; }
+  setOnline(true);
+  last = d;
+  const hw = d.hw || null;
+
+  setGauge('cpu', d.cpu);
+  $('cpu-sub').textContent = [d.cores ? `${d.cores} ${t('threads')}` : '', hw && hw.cpuTemp != null ? `${num(hw.cpuTemp)}°C` : ''].filter(Boolean).join(' · ');
+  setGauge('ram', d.ramUsed / d.ramTot * 100);
+  $('ram-sub').textContent = `${bytes(d.ramUsed)} / ${bytes(d.ramTot, 0)}`;
+  setGauge('gpu', d.gpu);
+  $('gpu-sub').textContent = hw && hw.gpuTemp != null ? `${num(hw.gpuTemp)}°C · ${num(hw.gpuClock)} MHz` : (d.gpu == null ? 'n/d' : '3D');
+
+  renderSensors(hw);
+  renderDisks();
+
+  $('down').textContent = rate(d.down || 0);
+  $('up').textContent = rate(d.up || 0);
+  hist.down.push(d.down || 0); hist.down.shift();
+  hist.up.push(d.up || 0); hist.up.shift();
+  drawSpark();
+  const p = d.ping;
+  $('ping').textContent = p == null ? t('unreachable') : `${p} ms`;
+  $('ping').style.color = p == null ? 'var(--hot)' : p < 40 ? 'var(--accent)' : p < 100 ? 'var(--warm)' : 'var(--hot)';
+  $('ping-host').textContent = d.pingHost ? `(${d.pingHost})` : '';
+
+  renderTop();
+
+  S.winName = d.name || d.user || '';
+  $('i-host').textContent = d.host || '–';
+  $('i-os').textContent = d.os || '–';
+  $('i-cpu').textContent = d.cpuName || '–';
+  $('i-gpu').textContent = d.gpuName || '–';
+  $('i-up').textContent = uptime(d.uptime || 0);
+}
+
+const FAN_SVG = '<svg viewBox="0 0 24 24"><path d="M12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm.5-9C17 2 17.1 5.6 14.8 6.7c-1 .5-1.4 1.4-1.6 2.3.5.2.9.5 1.2.9 3.7-2 7.6-1.2 7.6 2.6 0 4.5-3.6 4.6-4.7 2.3-.5-1-1.4-1.4-2.3-1.6-.2.5-.5.9-.9 1.2 2 3.7 1.2 7.6-2.6 7.6-4.5 0-4.6-3.6-2.3-4.7 1-.5 1.4-1.4 1.6-2.3-.5-.2-.9-.5-1.2-.9-3.7 2-7.6 1.2-7.6-2.6 0-4.5 3.6-4.6 4.7-2.3.5 1 1.4 1.4 2.3 1.6.2-.5.5-.9.9-1.2C7.8 5.9 8.6 2 12.5 2z"/></svg>';
+
+// l'helper invia il numero della ventola della scheda madre ("2"), la GPU è segnalata a parte
+const fanName = f => f.gpu ? 'GPU' : /^\d+$/.test(String(f.n)) ? `${t('fan')} ${f.n}` : String(f.n);
+
+function renderSensors(hw) {
+  $('c-sensors').classList.toggle('nohw', !hw);
+  if (!hw) return;
+  const temps = [
+    ['CPU', hw.cpuTemp], ['GPU', hw.gpuTemp], [t('hotspot'), hw.gpuHot], ['RAM', hw.ramTemp]
+  ].filter(t => t[1] != null);
+  $('s-temps').innerHTML = temps.map(([l, v]) => `<div class="tile"><b style="color:${tempColor(v)}">${num(v)}<small>°C</small></b><span>${l}</span>
+    <div class="meter"><i class="${v >= 80 ? 'warn' : ''}" style="width:${Math.min(100, v)}%"></i></div></div>`).join('');
+
+  const freq = [
+    ['CPU', hw.cpuClock != null ? num(hw.cpuClock / 1000, 2) : null, 'GHz'],
+    ['GPU', hw.gpuClock != null ? num(hw.gpuClock) : null, 'MHz'],
+    [t('gpu_mem'), hw.gpuMemClock != null ? num(hw.gpuMemClock) : null, 'MHz'],
+    [t('cpu_power'), hw.cpuPower != null ? num(hw.cpuPower) : null, 'W'],
+    [t('gpu_power'), hw.gpuPower != null ? num(hw.gpuPower) : null, 'W']
+  ].filter(f => f[1] != null);
+  $('s-freq').innerHTML = freq.map(([l, v, u]) => `<div class="tile"><b>${v}<small>${u}</small></b><span>${l}</span></div>`).join('');
+
+  if (hw.vramTot) {
+    $('vram-txt').textContent = `${(hw.vramUsed / 1024).toFixed(1)} / ${(hw.vramTot / 1024).toFixed(1)} GB`;
+    $('vram-bar').style.width = (hw.vramUsed / hw.vramTot * 100).toFixed(1) + '%';
+  }
+
+  const cores = [].concat(hw.cores || []);
+  $('s-cores').innerHTML = cores.map(c => `<div><div class="core-bar"><i style="height:${Math.min(100, c.l)}%"></i></div>
+    <div class="core-lbl">C${c.n}<span>${c.t != null ? num(c.t) + '°' : num(c.l) + '%'}</span></div></div>`).join('');
+
+  let fans = [].concat(hw.fans || []);
+  if (S.fansActive) fans = fans.filter(f => f.rpm > 0 || f.gpu);
+  fans.sort((a, b) => (!!b.gpu - !!a.gpu) ||String(a.n).localeCompare(String(b.n), 'en', { numeric: true }));
+  $('s-fans').innerHTML = fans.map(f => {
+    const spd = f.rpm > 0 ? Math.max(.25, 1500 / f.rpm).toFixed(2) + 's' : '0s';
+    return `<div class="fan ${f.rpm > 0 ? 'spin' : ''}" style="--spd:${spd}">${FAN_SVG}${esc(fanName(f))} <span>${f.rpm > 0 ? num(f.rpm) + ' RPM' : t('stopped')}</span></div>`;
+  }).join('');
+  $('s-fans').dataset.empty = fans.length ? '' : '1';
+}
+
+function renderDisks() {
+  if (!last) return;
+  $('disks').innerHTML = [].concat(last.disks || []).map(k => {
+    const used = (k.t - k.f) / k.t * 100;
+    const extra = [];
+    if (S.diskTemp && k.temp != null) extra.push(`<span style="color:${tempColor(k.temp)}">${num(k.temp)}°C</span>`);
+    return `<div class="disk"><div class="disk-top"><b>${k.n}${k.l ? ' ' + esc(k.l) : ''}</b><span>${bytes(k.f, 0)} ${t('free')}</span></div>
+      <div class="meter"><i class="${used > 90 ? 'warn' : ''}" style="width:${used.toFixed(1)}%"></i></div>
+      ${S.diskIO || extra.length ? `<div class="disk-io">
+        ${S.diskIO ? `<span class="r">${t('read')} ${rate(k.r || 0)}</span><span class="w">${t('write')} ${rate(k.w || 0)}</span>` : '<span></span>'}
+        ${extra.join('')}</div>` : ''}</div>`;
+  }).join('');
+}
+
+function renderTop() {
+  if (!last) return;
+  const list = (arr, fmt) => {
+    arr = [].concat(arr || []).slice(0, S.topCount);
+    const max = Math.max(...arr.map(x => x.v), 0.0001);
+    return arr.map(x => `<li><div class="top-line"><b>${esc(x.n)}</b><span>${fmt(x.v)}</span></div>
+      <div class="meter"><i style="width:${(x.v / max * 100).toFixed(1)}%"></i></div></li>`).join('');
+  };
+  $('top-cpu').innerHTML = list(last.topCpu, v => v.toFixed(1) + '%');
+  $('top-ram').innerHTML = list(last.topRam, v => bytes(v));
+}
+
+// i dati arrivano dall'helper, un piccolo server raggiungibile solo da questo PC
+const HELPER_URL = 'http://127.0.0.1:47811/stats';
+let statsBusy = false, lastOk = 0;
+async function loadStats() {
+  if (DEMO) { apply(demoStats()); return; }
+  if (statsBusy) return;                 // una richiesta alla volta
+  statsBusy = true;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 5000);
+  try {
+    const r = await fetch(HELPER_URL, { cache: 'no-store', signal: ctrl.signal });
+    const d = await r.json();
+    d.ts = Date.now();                   // conta quando è arrivato, non l'orologio dell'helper
+    lastOk = d.ts;
+    apply(d);
+  } catch (e) {
+    // l'avviso compare solo se l'helper non risponde da un po', non per una richiesta persa
+    if (Date.now() - lastOk > 10000) setOnline(false);
+  } finally { clearTimeout(timer); statsBusy = false; }
+}
+function showRes() {
+  $('i-res').textContent = DEMO ? '1080 × 1920' : `${Math.round(screen.width * devicePixelRatio)} × ${Math.round(screen.height * devicePixelRatio)}`;
+}
+
+/* ---------- Meteo (Open-Meteo, gratuito e senza chiave) ---------- */
+// codice meteo WMO -> [italiano, inglese, icona di giorno, icona di notte]
+const WMO = {
+  0: ['Sereno', 'Clear sky', '☀️', '🌙'], 1: ['Poco nuvoloso', 'Mainly clear', '🌤️', '🌙'],
+  2: ['Parzialmente nuvoloso', 'Partly cloudy', '⛅', '☁️'], 3: ['Coperto', 'Overcast', '☁️'],
+  45: ['Nebbia', 'Fog', '🌫️'], 48: ['Nebbia con brina', 'Freezing fog', '🌫️'],
+  51: ['Pioggerella debole', 'Light drizzle', '🌦️'], 53: ['Pioggerella', 'Drizzle', '🌦️'], 55: ['Pioggerella intensa', 'Heavy drizzle', '🌧️'],
+  56: ['Pioggerella gelata', 'Freezing drizzle', '🌧️'], 57: ['Pioggerella gelata', 'Freezing drizzle', '🌧️'],
+  61: ['Pioggia debole', 'Light rain', '🌦️'], 63: ['Pioggia', 'Rain', '🌧️'], 65: ['Pioggia forte', 'Heavy rain', '🌧️'],
+  66: ['Pioggia gelata', 'Freezing rain', '🌧️'], 67: ['Pioggia gelata forte', 'Heavy freezing rain', '🌧️'],
+  71: ['Neve debole', 'Light snow', '🌨️'], 73: ['Neve', 'Snow', '❄️'], 75: ['Neve forte', 'Heavy snow', '❄️'], 77: ['Granelli di neve', 'Snow grains', '🌨️'],
+  80: ['Rovesci deboli', 'Light showers', '🌦️'], 81: ['Rovesci', 'Showers', '🌧️'], 82: ['Rovesci violenti', 'Violent showers', '⛈️'],
+  85: ['Rovesci di neve', 'Snow showers', '🌨️'], 86: ['Forti rovesci di neve', 'Heavy snow showers', '❄️'],
+  95: ['Temporale', 'Thunderstorm', '⛈️'], 96: ['Temporale con grandine', 'Thunderstorm with hail', '⛈️'], 99: ['Temporale con grandine', 'Thunderstorm with hail', '⛈️']
+};
+const wmo = (code, day = 1) => {
+  const w = WMO[code] || ['–', '–', '🌡️'];
+  return { text: LANG === 'it' ? w[0] : w[1], icon: !day && w[3] ? w[3] : w[2] };
+};
+let lastWeather = null;
+const WX = { query: null, lat: null, lon: null, name: '' };
+let wxTimer = null;
+
+function wxMessage(msg) {
+  $('wx-msg').textContent = msg; $('wx-msg').classList.remove('off');
+  $('wx-body').classList.add('off');
+}
+async function loadWeather() {
+  if (DEMO) { WX.name = 'Bolzano'; renderWeather(demoWeather()); return; }
+  if (!S.weatherCity) { $('wx-title').textContent = t('weather'); wxMessage(t('wx_city')); return; }
+  try {
+    if (WX.query !== S.weatherCity) {
+      const g = await (await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(S.weatherCity)}&count=1&language=${LANG}&format=json`)).json();
+      if (!g.results || !g.results.length) { wxMessage(t('wx_notfound', S.weatherCity)); return; }
+      const r = g.results[0];
+      Object.assign(WX, { query: S.weatherCity, lat: r.latitude, lon: r.longitude, name: r.name });
+    }
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${WX.lat}&longitude=${WX.lon}`
+      + '&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,is_day'
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max'
+      + '&timezone=auto&forecast_days=6';
+    renderWeather(await (await fetch(url)).json());
+  } catch (e) {
+    wxMessage(t('wx_error'));
+    clearTimeout(wxTimer); wxTimer = setTimeout(loadWeather, 60000);
+  }
+}
+function renderWeather(w) {
+  if (!w) return;
+  lastWeather = w;
+  const c = w.current, dy = w.daily;
+  const now = wmo(c.weather_code, c.is_day);
+  $('wx-title').textContent = `${t('weather')} · ${WX.name}`;
+  $('wx-icon').textContent = now.icon;
+  $('wx-temp').textContent = `${Math.round(c.temperature_2m)}°`;
+  $('wx-desc').textContent = now.text;
+  $('wx-meta').innerHTML =
+    `<div><span>${t('feels')}</span> ${Math.round(c.apparent_temperature)}°</div>` +
+    `<div><span>${t('humidity')}</span> ${c.relative_humidity_2m}%</div>` +
+    `<div><span>${t('minmax')}</span> ${Math.round(dy.temperature_2m_min[0])}° / ${Math.round(dy.temperature_2m_max[0])}°</div>` +
+    `<div><span>${t('wind')}</span> ${Math.round(c.wind_speed_10m)} km/h</div>`;
+  $('wx-sun').textContent = `🌅 ${t('sunrise')} ${dy.sunrise[0].slice(11, 16)}   ·   🌇 ${t('sunset')} ${dy.sunset[0].slice(11, 16)}`;
+  let days = '';
+  for (let i = 1; i < Math.min(6, dy.time.length); i++) {
+    const dt = new Date(dy.time[i] + 'T12:00');
+    const name = cap(dt.toLocaleDateString(t('locale'), { weekday: 'short' }).replace('.', ''));
+    const pr = dy.precipitation_probability_max ? dy.precipitation_probability_max[i] : null;
+    days += `<div><b>${name}</b><i>${wmo(dy.weather_code[i]).icon}</i>${Math.round(dy.temperature_2m_max[i])}° <small>${Math.round(dy.temperature_2m_min[i])}°</small>`
+      + (pr != null ? `<br><small>💧${pr}%</small>` : '') + '</div>';
+  }
+  $('wx-days').innerHTML = days;
+  $('wx-msg').classList.add('off');
+  $('wx-body').classList.remove('off');
+  clearTimeout(wxTimer); wxTimer = setTimeout(loadWeather, 15 * 60000);
+}
+
+/* ---------- Musica (integrazione multimediale di Wallpaper Engine) ---------- */
+const MU = { state: 0, pos: 0, dur: 0, at: 0, title: '', colors: null };
+const MI = window.wallpaperMediaIntegration || { PLAYBACK_STOPPED: 0, PLAYBACK_PLAYING: 1, PLAYBACK_PAUSED: 2 };
+function musicIdle() { return !MU.title || MU.state === MI.PLAYBACK_STOPPED; }
+function updateMusic() {
+  $('c-music').classList.toggle('idle', S.musicHideIdle && musicIdle());
+  $('mu-title').textContent = MU.title || t('no_track');
+  $('mu-state').textContent = MU.state === MI.PLAYBACK_PLAYING ? t('playing') : MU.state === MI.PLAYBACK_PAUSED ? t('paused') : '';
+  applyAccents();
+  updateGroups();
+}
+if (window.wallpaperRegisterMediaPropertiesListener) {
+  window.wallpaperRegisterMediaPropertiesListener(e => {
+    MU.title = e.title || '';
+    $('mu-artist').textContent = e.artist || e.albumArtist || '';
+    $('mu-album').textContent = e.albumTitle || '';
+    updateMusic();
+  });
+  window.wallpaperRegisterMediaThumbnailListener(e => {
+    const art = e.thumbnail || '';
+    $('mu-cover').style.backgroundImage = art ? `url("${art}")` : '';
+    $('mu-cover').classList.toggle('has-art', !!art);
+    MU.colors = art ? e : null;
+    applyAccents();
+  });
+  window.wallpaperRegisterMediaPlaybackListener(e => { MU.state = e.state; MU.at = performance.now(); updateMusic(); });
+  if (window.wallpaperRegisterMediaTimelineListener) {
+    window.wallpaperRegisterMediaTimelineListener(e => { MU.pos = e.position; MU.dur = e.duration; MU.at = performance.now(); });
+  }
+} else if (!DEMO) {
+  $('mu-album').dataset.i18n = 'only_we';
+}
+function updateMusicProgress() {
+  if (!MU.dur) { $('mu-prog').style.width = '0'; $('mu-pos').textContent = ''; $('mu-dur').textContent = ''; return; }
+  const pos = Math.min(MU.dur, MU.pos + (MU.state === MI.PLAYBACK_PLAYING ? (performance.now() - MU.at) / 1000 : 0));
+  $('mu-prog').style.width = (pos / MU.dur * 100).toFixed(2) + '%';
+  $('mu-pos').textContent = mmss(pos);
+  $('mu-dur').textContent = mmss(MU.dur);
+}
+
+/* ---------- Colori ---------- */
+const toRgb = v => 'rgb(' + v.split(' ').map(c => Math.round(parseFloat(c) * 255)).join(',') + ')';
+function withAlpha(color, a) {
+  // accetta "rgb(r,g,b)" o "#rrggbb"
+  let r, g, b;
+  const m = color.match(/\d+(\.\d+)?/g);
+  if (color[0] === '#') { const h = color.slice(1); [r, g, b] = [0, 2, 4].map(i => parseInt(h.substr(i, 2), 16)); }
+  else if (m) [r, g, b] = m;
+  return `rgba(${r},${g},${b},${a})`;
+}
+function applyAccents() {
+  let a1 = toRgb(S.accent), a2 = toRgb(S.accent2);
+  if (S.musicColors && MU.colors && !musicIdle()) {
+    a1 = MU.colors.primaryColor || a1;
+    a2 = MU.colors.secondaryColor || a2;
+  }
+  root.setProperty('--accent', a1); root.setProperty('--accent2', a2);
+  root.setProperty('--glow1', withAlpha(a1, .22)); root.setProperty('--glow2', withAlpha(a2, .2));
+  $('g1').setAttribute('stop-color', a1); $('g2').setAttribute('stop-color', a2);
+}
+
+/* ---------- Barre audio ---------- */
+const audio = { cur: new Float32Array(64), target: new Float32Array(64), active: false };
+if (window.wallpaperRegisterAudioListener) {
+  window.wallpaperRegisterAudioListener(a => {
+    for (let i = 0; i < 64; i++) audio.target[i] = Math.min(1, (a[i] + a[i + 64]) / 2);
+    audio.active = true;
+  });
+}
+function drawAudio() {
+  const cv = $('audio'), dpr = devicePixelRatio || 1;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  if (S.audio && audio.active) {
+    const grad = ctx.createLinearGradient(0, h, 0, 0);
+    grad.addColorStop(0, css('--accent'));
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.globalAlpha = .55;
+    const n = 64, bw = w / (n * 2);
+    for (let i = 0; i < n; i++) {
+      audio.cur[i] += (audio.target[i] - audio.cur[i]) * .25;
+      const bh = audio.cur[i] * h;
+      ctx.fillRect(w / 2 + i * bw + 1, h - bh, bw - 2, bh);
+      ctx.fillRect(w / 2 - (i + 1) * bw + 1, h - bh, bw - 2, bh);
+    }
+  }
+}
+function frame() {
+  drawAudio();
+  updateAnalog();
+  updateMusicProgress();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- Visibilità ---------- */
+// proprietà "mostra/nascondi" -> elemento della pagina
+const VISIBILITY = {
+  showgreeting: 'greet', showdate: 'date',
+  showweather: 'c-weather', showforecast: 'wx-days', showsun: 'wx-sun', showmusic: 'c-music',
+  showcpu: 'w-cpu', showram: 'w-ram', showgpu: 'w-gpu',
+  showtemps: 's-temps', showfreq: 's-freq', showvram: 's-vram', showcores: 's-cores', showfans: 's-fans',
+  showdisks: 'c-disks', shownetwork: 'c-net', showping: 'ping-row', showtop: 'c-top',
+  showhost: 'r-host', showos: 'r-os', showcpuname: 'r-cpu', showgpuname: 'r-gpu',
+  showres: 'r-res', showuptime: 'r-up', showwarning: 'offline'
+};
+const shown = id => { const c = $(id).classList; return !c.contains('off') && !c.contains('idle'); };
+function updateGroups() {
+  const analog = S.clock && S.clockStyle !== 'digital', digital = S.clock && S.clockStyle !== 'analog';
+  $('w-analog').classList.toggle('off', !analog);
+  $('timebox').classList.toggle('off', !digital);
+  $('clockrow').classList.toggle('both', analog && digital);
+  $('clockrow').classList.toggle('off', !analog && !digital);
+  $('c-perf').classList.toggle('off', !['w-cpu', 'w-ram', 'w-gpu'].some(shown));
+  $('c-sensors').classList.toggle('off', !S.sensors || !['s-temps', 's-freq', 's-vram', 's-cores', 's-fans'].some(shown));
+  $('c-sys').classList.toggle('off', !S.sys || !['r-host', 'r-os', 'r-cpu', 'r-gpu', 'r-res', 'r-up'].some(shown));
+  $('top-cpu-col').classList.toggle('off', S.topType === 'ram');
+  $('top-ram-col').classList.toggle('off', S.topType === 'cpu');
+  $('row-a').classList.toggle('off', !['c-weather', 'c-music'].some(shown));
+  $('row-b').classList.toggle('off', !['c-disks', 'c-net'].some(shown));
+  $('row-c').classList.toggle('off', !['c-top', 'c-sys'].some(shown));
+  autoFit();
+  drawSpark();
+}
+
+// rimpicciolisce tutto quanto basta perché i widget stiano nello schermo
+function autoFit() {
+  // con la disposizione fissata le dimensioni restano quelle del momento del fissaggio
+  if (layout.pinned) { root.setProperty('--fit', layout.fit || 1); return; }
+  root.setProperty('--fit', 1);
+  if (!S.autoFit) return;
+  const main = document.querySelector('main');
+  for (let i = 0; i < 3; i++) {
+    const kids = [...main.children].filter(k => k.offsetHeight);
+    if (!kids.length) return;
+    const top = kids[0].offsetTop, last = kids[kids.length - 1];
+    const h = last.offsetTop + last.offsetHeight - top;
+    const avail = innerHeight * .96;
+    if (h <= avail) return;
+    const fit = parseFloat(css('--fit')) * avail / h;
+    root.setProperty('--fit', fit.toFixed(4));
+  }
+}
+
+/* ---------- Proprietà utente (Wallpaper Engine) ---------- */
+const FONTS = {
+  segoe: '"Segoe UI Variable Display", "Segoe UI", sans-serif',
+  bahn: 'Bahnschrift, "Segoe UI", sans-serif',
+  cascadia: '"Cascadia Code", Consolas, monospace',
+  consolas: 'Consolas, monospace',
+  georgia: 'Georgia, serif'
+};
+// immagine scelta dall'utente, altrimenti la Via Lattea generata a 1080x1920 (mostrata 1:1)
+function updateBackground() {
+  const src = S.bgImage ? `file:///${S.bgImage}` : (S.sky ? 'via_lattea_1080x1920.png' : '');
+  $('bg').style.backgroundImage = src ? `url("${src}")` : '';
+  $('dim').style.opacity = src ? css('--dim') : 0;
+}
+let cityTimer = null;
+window.wallpaperPropertyListener = {
+  applyUserProperties(p) {
+    for (const k in VISIBILITY) if (p[k]) $(VISIBILITY[k]).classList.toggle('off', !p[k].value);
+    const set = (key, prop, fn = v => v) => { if (p[key]) S[prop] = fn(p[key].value); };
+    set('use24h', 'h24'); set('showseconds', 'secs'); set('showaudio', 'audio');
+    set('showsysinfo', 'sys'); set('showyear', 'year'); set('showweek', 'week'); set('showdayofyear', 'doy');
+    set('showname', 'showName'); set('customname', 'customName', v => (v || '').trim());
+    set('showclock', 'clock'); set('clockstyle', 'clockStyle');
+    set('showsensors', 'sensors'); set('fansactive', 'fansActive');
+    set('showdiskio', 'diskIO'); set('showdisktemp', 'diskTemp');
+    set('toptype', 'topType'); set('topcount', 'topCount', Number);
+    set('musichideidle', 'musicHideIdle'); set('musiccolors', 'musicColors');
+    set('nightdim', 'night'); set('nightfrom', 'nightFrom', Number); set('nightto', 'nightTo', Number); set('nightlevel', 'nightLevel', Number);
+    set('accentcolor', 'accent'); set('accentcolor2', 'accent2');
+    set('snapgrid', 'snap'); set('autofit', 'autoFit');
+    if (p.gridsize) { S.grid = Number(p.gridsize.value); root.setProperty('--grid', S.grid + 'px'); }
+    if (p.editmode) setEditMode(p.editmode.value);
+    document.body.classList.toggle('snapping', S.snap);
+
+    if (p.analognumbers) { S.analogNumbers = p.analognumbers.value; buildAnalog(); }
+    if (p.theme) document.documentElement.dataset.theme = p.theme.value;
+    if (p.language) setLanguage(p.language.value);
+    if (p.font) document.body.style.fontFamily = FONTS[p.font.value] || '';
+    if (p.uiscale) root.setProperty('--scale', p.uiscale.value / 100);
+    if (p.cardopacity) root.setProperty('--card-op', p.cardopacity.value / 100);
+    if (p.backgroundimage) S.bgImage = p.backgroundimage.value || '';
+    if (p.showsky) S.sky = p.showsky.value;
+    if (p.backgrounddim) root.setProperty('--dim', p.backgrounddim.value / 100);
+    if (p.backgroundimage || p.backgrounddim || p.showsky) updateBackground();
+    if (p.weathercity) {
+      // il campo di testo invia un evento per ogni tasto: aspetta che l'utente finisca di scrivere
+      S.weatherCity = (p.weathercity.value || '').trim();
+      clearTimeout(cityTimer); cityTimer = setTimeout(loadWeather, 1200);
+    }
+    if (p.accentcolor || p.accentcolor2 || p.musiccolors) applyAccents();
+    if (p.musichideidle) updateMusic();
+    tickGreeting(); tickDate(new Date()); updateNight();
+    renderDisks(); renderTop(); if (last) renderSensors(last.hw);
+    updateGroups();
+  }
+};
+
+/* ---------- Widget spostabili e ridimensionabili ---------- */
+// Al primo spostamento tutta la disposizione viene "fissata": ogni widget riceve una posizione
+// assoluta sullo schermo (in frazioni, così vale a qualsiasi risoluzione). Da quel momento un widget
+// che cambia altezza o viene nascosto non sposta più gli altri.
+const LAYOUT_KEY = 'vsc-layout-v2';
+var layout = { pinned: false, fit: 1, w: {}, def: {} };
+try { Object.assign(layout, JSON.parse(localStorage.getItem(LAYOUT_KEY)) || {}); } catch (e) {}
+try { localStorage.removeItem('vsc-positions'); } catch (e) {}   // formato vecchio, non più valido
+const saveLayout = () => { try { localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout)); } catch (e) {} };
+const draggables = () => document.querySelectorAll('[data-drag]');
+const keyOf = el => el.dataset.drag;
+const getP = el => layout.w[keyOf(el)] || null;
+
+function applyPos(el) {
+  const p = getP(el);
+  el.classList.toggle('pinned', !!p);
+  if (!p) { el.style.left = el.style.top = el.style.width = el.style.transform = ''; return; }
+  el.style.left = (p.x * innerWidth).toFixed(1) + 'px';
+  el.style.top = (p.y * innerHeight).toFixed(1) + 'px';
+  // i riquadri mantengono la larghezza; i testi (saluto, orologio, data) si adattano al contenuto
+  el.style.width = el.classList.contains('card') ? (p.w * innerWidth).toFixed(1) + 'px' : '';
+  el.style.transform = p.s && p.s !== 1 ? `scale(${p.s})` : '';
+}
+function pinAll() {
+  if (layout.pinned) return;
+  layout.fit = parseFloat(css('--fit')) || 1;
+  const snap = {};
+  draggables().forEach(el => {
+    if (!el.offsetParent && getComputedStyle(el).position !== 'fixed') return;   // widget nascosto
+    const r = el.getBoundingClientRect();
+    snap[keyOf(el)] = { x: r.left / innerWidth, y: r.top / innerHeight, w: r.width / innerWidth, s: 1 };
+  });
+  layout.w = snap;
+  layout.def = JSON.parse(JSON.stringify(snap));
+  layout.pinned = true;
+  draggables().forEach(applyPos);
+  saveLayout();
+}
+function ensurePinned(el) {
+  pinAll();
+  // widget che era nascosto al momento del fissaggio: lo fissa dove si trova adesso
+  if (!getP(el)) {
+    const r = el.getBoundingClientRect();
+    layout.w[keyOf(el)] = { x: r.left / innerWidth, y: r.top / innerHeight, w: r.width / innerWidth, s: 1 };
+    layout.def[keyOf(el)] = Object.assign({}, layout.w[keyOf(el)]);
+    applyPos(el);
+  }
+}
+function resetOne(el) {
+  const d = layout.def[keyOf(el)];
+  if (!d) return;
+  layout.w[keyOf(el)] = Object.assign({}, d);
+  applyPos(el); saveLayout(); select(el);
+}
+function setEditMode(on) {
+  S.edit = on;
+  document.body.classList.toggle('editing', on);
+  if (!on) select(null);
+}
+let sel = null;
+function select(el) {
+  document.querySelectorAll('[data-drag].selected').forEach(x => x.classList.remove('selected'));
+  sel = el;
+  if (el) el.classList.add('selected');
+  $('selname').textContent = el ? el.dataset.label : t('none');
+  $('sz-val').textContent = el ? Math.round(((getP(el) || {}).s || 1) * 100) + '%' : '–';
+}
+function resize(delta) {
+  if (!sel) return;
+  ensurePinned(sel);
+  const p = getP(sel);
+  p.s = Math.min(3, Math.max(.4, Math.round(((p.s || 1) + delta) * 20) / 20));
+  applyPos(sel); saveLayout(); select(sel);
+}
+
+let drag = null;
+addEventListener('mousedown', e => {
+  if (!S.edit || e.button !== 0 || e.target.closest('#editbar')) return;
+  const el = e.target.closest('[data-drag]');
+  select(el);
+  if (!el) return;
+  ensurePinned(el);
+  const p = getP(el);
+  drag = { el, p, sx: e.clientX, sy: e.clientY, x0: p.x * innerWidth, y0: p.y * innerHeight };
+  e.preventDefault();
+});
+addEventListener('mousemove', e => {
+  if (!drag) return;
+  let x = drag.x0 + e.clientX - drag.sx, y = drag.y0 + e.clientY - drag.sy;
+  if (S.snap) { const g = S.grid; x = Math.round(x / g) * g; y = Math.round(y / g) * g; }
+  drag.p.x = x / innerWidth; drag.p.y = y / innerHeight;
+  applyPos(drag.el);
+});
+addEventListener('mouseup', () => { if (drag) { drag = null; saveLayout(); } });
+addEventListener('wheel', e => {
+  if (!S.edit) return;
+  const el = e.target.closest('[data-drag]');
+  if (!el) return;
+  e.preventDefault();
+  if (sel !== el) select(el);
+  resize(e.deltaY < 0 ? .05 : -.05);
+}, { passive: false });
+addEventListener('dblclick', e => {
+  if (!S.edit) return;
+  const el = e.target.closest('[data-drag]');
+  if (el) resetOne(el);
+});
+$('sz-minus').addEventListener('click', () => resize(-.05));
+$('sz-plus').addEventListener('click', () => resize(.05));
+$('sel-reset').addEventListener('click', () => { if (sel) resetOne(sel); });
+$('resetall').addEventListener('click', () => {
+  // torna alla disposizione automatica
+  layout = { pinned: false, fit: 1, w: {}, def: {} };
+  saveLayout(); draggables().forEach(applyPos); autoFit(); select(sel);
+});
+
+/* ---------- Lingua scelta nel pannello ---------- */
+function setLanguage(v) {
+  LANG = v === 'it' || v === 'en' ? v : (/^it/i.test(navigator.language || '') ? 'it' : 'en');
+  applyI18n();
+  select(sel);
+  tickGreeting(); tickDate(new Date());
+  if (last) apply(Object.assign({}, last, { ts: Date.now() }));
+  if (lastWeather) renderWeather(lastWeather); else if (!S.weatherCity) loadWeather();
+  updateMusic();
+}
+
+/* ---------- Modalità dimostrativa (?demo): dati finti, usata per l'anteprima del Workshop ---------- */
+function demoStats() {
+  const w = (a, b) => a + Math.random() * (b - a);
+  return {
+    ts: Date.now(), host: 'MY-PC', name: 'Alex', os: 'Windows 11 Pro', cpuName: 'AMD Ryzen 7 7800X3D',
+    gpuName: 'NVIDIA GeForce RTX 4070', cores: 16, cpu: w(14, 22), gpu: w(30, 40),
+    ramTot: 32 * 1024 ** 3, ramUsed: 13.6 * 1024 ** 3, uptime: 3 * 3600 + 25 * 60,
+    disks: [
+      { n: 'C:', l: '', t: 1000e9, f: 412e9, r: w(1e6, 6e6), w: w(2e5, 2e6), temp: 44 },
+      { n: 'D:', l: 'Games', t: 2000e9, f: 845e9, r: 0, w: 0, temp: 37 }
+    ],
+    down: w(2e5, 9e5), up: w(4e4, 2e5), ping: 18, pingHost: '1.1.1.1',
+    topCpu: [['Game', 6.2], ['Browser', 3.1], ['Discord', 1.2], ['Spotify', 0.8], ['Explorer', 0.4]].map(([n, v]) => ({ n, v })),
+    topRam: [['Browser', 3.1e9], ['Game', 2.6e9], ['Discord', 6.4e8], ['Spotify', 4.1e8], ['Explorer', 2.2e8]].map(([n, v]) => ({ n, v })),
+    hw: {
+      cpuTemp: 58, cpuClock: 4950, cpuPower: 61, gpuTemp: 54, gpuHot: 66, gpuClock: 2475, gpuMemClock: 10501,
+      gpuPower: 118, vramUsed: 3480, vramTot: 12282, ramTemp: 41,
+      cores: [22, 15, 31, 12, 18, 9, 26, 14].map((l, i) => ({ n: i + 1, l, t: 52 + (i * 7) % 9 })),
+      fans: [{ n: 'GPU', rpm: 1240, gpu: true }, { n: '1', rpm: 980 }, { n: '2', rpm: 1310 }]
+    }
+  };
+}
+function demoWeather() {
+  const days = [...Array(6)].map((_, i) => new Date(Date.now() + i * 864e5).toISOString().slice(0, 10));
+  return {
+    current: { temperature_2m: 14, apparent_temperature: 13, relative_humidity_2m: 62, weather_code: 1, wind_speed_10m: 8, is_day: 1 },
+    daily: {
+      time: days, weather_code: [1, 2, 3, 61, 1, 0],
+      temperature_2m_max: [17, 18, 15, 12, 16, 19], temperature_2m_min: [7, 8, 9, 7, 6, 8],
+      sunrise: days.map(d => d + 'T07:21'), sunset: days.map(d => d + 'T18:44'),
+      precipitation_probability_max: [5, 10, 35, 80, 15, 0]
+    }
+  };
+}
+if (DEMO) {
+  MU.title = 'Starlight'; MU.state = MI.PLAYBACK_PLAYING; MU.pos = 83; MU.dur = 241; MU.at = performance.now();
+  $('mu-artist').textContent = 'Night Drive'; $('mu-album').textContent = 'Midnight Roads';
+}
+
+/* ---------- Avvio ---------- */
+applyI18n();
+select(null);
+buildAnalog();
+applyAccents();
+updateBackground();
+draggables().forEach(applyPos);
+tick();
+showRes();
+setOnline(false);
+loadStats();
+setInterval(loadStats, 2000);
+loadWeather();
+updateMusic();
+requestAnimationFrame(frame);
+addEventListener('resize', () => { showRes(); autoFit(); drawSpark(); draggables().forEach(applyPos); });
+// il contenuto cambia altezza quando arrivano i dati: ricontrolla ogni tanto
+setInterval(autoFit, 5000);
+</script>
+</body>
+</html>
