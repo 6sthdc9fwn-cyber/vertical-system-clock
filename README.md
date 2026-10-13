@@ -22,7 +22,7 @@ Gli sfondi di Wallpaper Engine non possono leggere CPU, RAM, dischi e rete. Per 
 
 1. Scarica il repository: **Code → Download ZIP**, poi estrai lo ZIP.
 2. Apri la cartella `helper` e fai doppio clic su **`install.cmd`**.
-3. Fatto: l'helper parte subito e a ogni accesso a Windows.
+3. Fatto: l'helper parte subito e a ogni accesso a Windows, e riparte da solo se si chiude. Eventuali errori finiscono in `%LOCALAPPDATA%\VerticalSystemClock\helper.log`.
 
 Per rimuoverlo: doppio clic su **`uninstall.cmd`**.
 
@@ -30,8 +30,10 @@ Per rimuoverlo: doppio clic su **`uninstall.cmd`**.
 Servono a **LibreHardwareMonitor** (gratuito, open source):
 
 1. Installalo da [GitHub](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases) oppure con `winget install LibreHardwareMonitor.LibreHardwareMonitor`.
-2. Avvialo **come amministratore**.
-3. Nel menu **Options** attiva **Remote Web Server** (porta 8085) e **Run On Windows Startup**.
+2. Avvialo **come amministratore** (senza questi permessi il server dei sensori non parte).
+3. **Options → Remote Web Server → Port**: interfaccia **0.0.0.0**, porta **8085**, poi **OK**.
+4. **Options → Remote Web Server → Run**. Se Windows chiede il permesso del firewall puoi cliccare **Annulla**: lo sfondo legge i dati dallo stesso PC e funziona comunque.
+5. **Options → Run On Windows Startup** (da amministratore), così parte da solo a ogni avvio.
 
 ### Privacy
 - L'helper risponde **solo a questo PC** (`127.0.0.1:47811`): dalla rete non è raggiungibile.
@@ -51,7 +53,7 @@ Wallpaper Engine wallpapers can't read CPU, RAM, drives and network. That's what
 
 1. Download the repository: **Code → Download ZIP**, then extract it.
 2. Open the `helper` folder and double-click **`install.cmd`**.
-3. Done: the helper starts now and at every Windows sign-in.
+3. Done: the helper starts now and at every Windows sign-in, and restarts by itself if it exits. Any errors are written to `%LOCALAPPDATA%\VerticalSystemClock\helper.log`.
 
 To remove it: double-click **`uninstall.cmd`**.
 
@@ -59,8 +61,10 @@ To remove it: double-click **`uninstall.cmd`**.
 These need **LibreHardwareMonitor** (free, open source):
 
 1. Install it from [GitHub](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor/releases) or with `winget install LibreHardwareMonitor.LibreHardwareMonitor`.
-2. Run it **as administrator**.
-3. In the **Options** menu enable **Remote Web Server** (port 8085) and **Run On Windows Startup**.
+2. Run it **as administrator** (without it the sensor server won't start).
+3. **Options → Remote Web Server → Port**: interface **0.0.0.0**, port **8085**, then **OK**.
+4. **Options → Remote Web Server → Run**. If Windows asks for firewall permission you can click **Cancel**: the wallpaper reads the data from the same PC and still works.
+5. **Options → Run On Windows Startup** (as administrator), so it starts by itself every time.
 
 ### Privacy
 - The helper answers **only this PC** (`127.0.0.1:47811`): it can't be reached from the network.

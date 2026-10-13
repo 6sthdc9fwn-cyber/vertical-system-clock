@@ -7,7 +7,11 @@ $target = Join-Path $env:LOCALAPPDATA 'VerticalSystemClock'
 $startup = [Environment]::GetFolderPath('Startup')
 $shortcut = Join-Path $startup 'Vertical System Clock helper.lnk'
 
-# ferma un'eventuale versione già in esecuzione / stop a running copy
+# ferma un'eventuale versione già in esecuzione (prima l'avviatore, che altrimenti la riavvierebbe)
+# stop a running copy (the launcher first, otherwise it would restart the helper)
+Get-CimInstance Win32_Process -Filter "Name='wscript.exe'" |
+    Where-Object { $_.CommandLine -like '*VerticalSystemClock*start-helper.vbs*' } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
     Where-Object { $_.CommandLine -like '*VerticalSystemClock*sysinfo.ps1*' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force }

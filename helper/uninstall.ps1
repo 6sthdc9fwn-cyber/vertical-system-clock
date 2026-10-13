@@ -3,6 +3,9 @@
 $target = Join-Path $env:LOCALAPPDATA 'VerticalSystemClock'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Startup')) 'Vertical System Clock helper.lnk'
 
+Get-CimInstance Win32_Process -Filter "Name='wscript.exe'" |
+    Where-Object { $_.CommandLine -like '*VerticalSystemClock*start-helper.vbs*' } |
+    ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" |
     Where-Object { $_.CommandLine -like '*VerticalSystemClock*sysinfo.ps1*' } |
     ForEach-Object { Stop-Process -Id $_.ProcessId -Force }

@@ -12,17 +12,36 @@ param([switch]$Once, [int]$Interval = 2, [string]$PingHost = '1.1.1.1', [int]$Lh
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-# Una sola istanza alla volta
+# Registro errori accanto allo script (max ~200 KB): un errore viene annotato e l'helper prosegue
+$logFile = Join-Path $PSScriptRoot 'helper.log'
+function Write-Log([string]$msg) {
+    try {
+        if ((Test-Path $logFile) -and (Get-Item $logFile).Length -gt 200KB) { Remove-Item $logFile -Force }
+        Add-Content -Path $logFile -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg"
+    } catch {}
+}
+trap { Write-Log "errore: $_"; continue }
+
+# Una sola istanza alla volta (un mutex "abbandonato" da un'istanza chiusa male vale come acquisito)
 $mutex = New-Object System.Threading.Mutex($false, 'Global\VerticalSysClockMonitor')
-if (-not $Once -and -not $mutex.WaitOne(0)) { exit }
+$owned = $false
+try { $owned = $mutex.WaitOne(0) } catch [System.Threading.AbandonedMutexException] { $owned = $true }
+if (-not $Once -and -not $owned) { exit }
 
 $enc = New-Object System.Text.UTF8Encoding($false)
 
 # Server in ascolto solo sull'indirizzo di loopback: nessun altro computer può collegarsi
 $listener = $null
 if (-not $Once) {
-    $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $Port)
-    $listener.Start()
+    try {
+        $listener = New-Object System.Net.Sockets.TcpListener([System.Net.IPAddress]::Loopback, $Port)
+        $listener.Start()
+    } catch {
+        # porta occupata o rete non ancora pronta: esce, l'avviatore riprova tra 30 secondi
+        Write-Log "impossibile aprire la porta $Port : $_"
+        exit 1
+    }
+    Write-Log "avviato, in ascolto su 127.0.0.1:$Port"
 }
 
 function Send-Response($client, [string]$body) {
