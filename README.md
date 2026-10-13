@@ -4,6 +4,8 @@ Sfondo per **Wallpaper Engine** con orologio, meteo, musica, sensori e informazi
 
 A **Wallpaper Engine** wallpaper with clock, weather, music, sensors and system info over a Milky Way background. Designed for vertical monitors, works horizontally too.
 
+**➜ Steam Workshop: [Vertical System Clock](https://steamcommunity.com/sharedfiles/filedetails/?id=3819232785)**
+
 ![Anteprima / Preview](wallpaper/preview.jpg)
 
 [🇮🇹 Italiano](#italiano) · [🇬🇧 English](#english)
@@ -13,7 +15,7 @@ A **Wallpaper Engine** wallpaper with clock, weather, music, sensors and system 
 ## Italiano
 
 ### Cosa funziona subito
-Abbonandoti allo sfondo sul Workshop funzionano subito: orologio digitale e analogico, data, **meteo** (scrivi la città nel pannello), **musica in riproduzione** (Spotify e altri), barre audio e la Via Lattea di sfondo.
+Abbonandoti allo sfondo sul [Workshop di Steam](https://steamcommunity.com/sharedfiles/filedetails/?id=3819232785) funzionano subito: orologio digitale e analogico, data, **meteo** (scrivi la città nel pannello), **musica in riproduzione** (Spotify e altri), barre audio e la Via Lattea di sfondo.
 
 ### Dati di sistema: l'helper
 Gli sfondi di Wallpaper Engine non possono leggere CPU, RAM, dischi e rete. Per questo serve il piccolo **helper** di questo repository:
@@ -42,7 +44,7 @@ Servono a **LibreHardwareMonitor** (gratuito, open source):
 ## English
 
 ### Works out of the box
-After subscribing on the Workshop you get: digital and analog clock, date, **weather** (type your city in the panel), **now playing** (Spotify and others), audio bars and the Milky Way background.
+After subscribing on the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3819232785) you get: digital and analog clock, date, **weather** (type your city in the panel), **now playing** (Spotify and others), audio bars and the Milky Way background.
 
 ### System data: the helper
 Wallpaper Engine wallpapers can't read CPU, RAM, drives and network. That's what the small **helper** in this repository is for:

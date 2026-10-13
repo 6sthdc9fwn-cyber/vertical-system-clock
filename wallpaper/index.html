@@ -1206,6 +1206,16 @@ requestAnimationFrame(frame);
 addEventListener('resize', () => { showRes(); autoFit(); drawSpark(); draggables().forEach(applyPos); });
 // il contenuto cambia altezza quando arrivano i dati: ricontrolla ogni tanto
 setInterval(autoFit, 5000);
+
+// in modalità dimostrativa le opzioni si possono passare nell'indirizzo, es. ?demo&theme=light&clockstyle=both
+if (DEMO) {
+  const props = {};
+  for (const [k, v] of new URLSearchParams(location.search)) {
+    if (k === 'demo') continue;
+    props[k] = { value: v === 'true' ? true : v === 'false' ? false : (v !== '' && !isNaN(v) ? Number(v) : v) };
+  }
+  if (Object.keys(props).length) window.wallpaperPropertyListener.applyUserProperties(props);
+}
 </script>
 </body>
 </html>
